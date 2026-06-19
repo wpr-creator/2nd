@@ -8,121 +8,92 @@
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;600;700&family=DM+Sans:wght@400;500&display=swap" rel="stylesheet">
 <style>
   :root {
-    --ink: #1a1a2e; --panel: #16213e; --card: #0f3460;
-    --gold: #f5a623; --mint: #4ecdc4; --rose: #e84393;
-    --white: #f0f4ff; --soft: #a8b2d8; --success: #56cf8a;
-    --radius: 14px;
+    --ink:#1a1a2e; --panel:#16213e; --gold:#f5a623; --mint:#4ecdc4;
+    --rose:#e84393; --violet:#a78bfa; --orange:#fb923c;
+    --white:#f0f4ff; --soft:#a8b2d8; --success:#56cf8a; --radius:14px;
   }
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { background: var(--ink); color: var(--white); font-family: 'DM Sans', sans-serif; min-height: 100vh; overflow-x: hidden; }
-  body::before {
-    content: ''; position: fixed; inset: 0; pointer-events: none; z-index: 0;
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{background:var(--ink);color:var(--white);font-family:'DM Sans',sans-serif;min-height:100vh;overflow-x:hidden;}
+  body::before{
+    content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
     background-image:
-      radial-gradient(1px 1px at 15% 20%, rgba(255,255,255,0.6) 0%, transparent 100%),
-      radial-gradient(1px 1px at 30% 60%, rgba(255,255,255,0.4) 0%, transparent 100%),
-      radial-gradient(1.5px 1.5px at 55% 10%, rgba(255,255,255,0.7) 0%, transparent 100%),
-      radial-gradient(1px 1px at 70% 45%, rgba(255,255,255,0.3) 0%, transparent 100%),
-      radial-gradient(1px 1px at 85% 75%, rgba(255,255,255,0.5) 0%, transparent 100%),
-      radial-gradient(1.5px 1.5px at 42% 85%, rgba(255,255,255,0.6) 0%, transparent 100%),
-      radial-gradient(1px 1px at 8% 50%, rgba(255,255,255,0.4) 0%, transparent 100%),
-      radial-gradient(1px 1px at 93% 25%, rgba(255,255,255,0.5) 0%, transparent 100%),
-      radial-gradient(1.5px 1.5px at 65% 70%, rgba(255,255,255,0.3) 0%, transparent 100%),
-      radial-gradient(1px 1px at 25% 35%, rgba(255,255,255,0.6) 0%, transparent 100%);
+      radial-gradient(1px 1px at 15% 20%,rgba(255,255,255,0.6) 0%,transparent 100%),
+      radial-gradient(1px 1px at 30% 60%,rgba(255,255,255,0.4) 0%,transparent 100%),
+      radial-gradient(1.5px 1.5px at 55% 10%,rgba(255,255,255,0.7) 0%,transparent 100%),
+      radial-gradient(1px 1px at 70% 45%,rgba(255,255,255,0.3) 0%,transparent 100%),
+      radial-gradient(1px 1px at 85% 75%,rgba(255,255,255,0.5) 0%,transparent 100%),
+      radial-gradient(1.5px 1.5px at 42% 85%,rgba(255,255,255,0.6) 0%,transparent 100%),
+      radial-gradient(1px 1px at 8% 50%,rgba(255,255,255,0.4) 0%,transparent 100%),
+      radial-gradient(1px 1px at 93% 25%,rgba(255,255,255,0.5) 0%,transparent 100%),
+      radial-gradient(1.5px 1.5px at 65% 70%,rgba(255,255,255,0.3) 0%,transparent 100%),
+      radial-gradient(1px 1px at 25% 35%,rgba(255,255,255,0.6) 0%,transparent 100%);
   }
 
-  /* ── Name gate overlay ── */
-  .name-gate {
-    position: fixed; inset: 0; background: rgba(10,10,20,0.92);
-    backdrop-filter: blur(8px); z-index: 200;
-    display: flex; align-items: center; justify-content: center; padding: 20px;
-  }
-  .name-gate.hidden { display: none; }
-  .name-box {
-    background: var(--panel); border: 1px solid rgba(255,255,255,0.1);
-    border-radius: 24px; padding: 48px 40px; max-width: 440px; width: 100%; text-align: center;
-    box-shadow: 0 30px 80px rgba(0,0,0,0.5);
-  }
-  .name-rocket { font-size: 3.5rem; margin-bottom: 16px; }
-  .name-box h2 { font-family:'Space Grotesk',sans-serif; font-size:1.8rem; font-weight:700; margin-bottom:8px; }
-  .name-box p { color: var(--soft); margin-bottom: 28px; font-size:0.95rem; line-height:1.6; }
-  .name-input {
-    width: 100%; background: rgba(255,255,255,0.06); border: 1.5px solid rgba(255,255,255,0.15);
-    border-radius: 12px; padding: 16px; color: var(--white); font-family:'Space Grotesk',sans-serif;
-    font-size: 1.1rem; text-align: center; outline: none; margin-bottom: 14px; transition: border-color 0.15s;
-  }
-  .name-input:focus { border-color: var(--gold); }
-  .name-btn {
-    width: 100%; background: var(--gold); color: var(--ink); border: none; border-radius: 12px;
-    padding: 16px; font-family:'Space Grotesk',sans-serif; font-weight:700; font-size:1rem; cursor:pointer; transition:opacity 0.15s;
-  }
-  .name-btn:hover { opacity:0.9; }
-  .name-error { color: #ff6b6b; font-size:0.85rem; margin-top:8px; min-height:18px; }
+  /* Name gate */
+  .name-gate{position:fixed;inset:0;background:rgba(10,10,20,0.92);backdrop-filter:blur(8px);z-index:200;display:flex;align-items:center;justify-content:center;padding:20px;}
+  .name-gate.hidden{display:none;}
+  .name-box{background:var(--panel);border:1px solid rgba(255,255,255,0.1);border-radius:24px;padding:48px 40px;max-width:440px;width:100%;text-align:center;box-shadow:0 30px 80px rgba(0,0,0,0.5);}
+  .name-rocket{font-size:3.5rem;margin-bottom:16px;}
+  .name-box h2{font-family:'Space Grotesk',sans-serif;font-size:1.8rem;font-weight:700;margin-bottom:8px;}
+  .name-box p{color:var(--soft);margin-bottom:28px;font-size:0.95rem;line-height:1.6;}
+  .name-input{width:100%;background:rgba(255,255,255,0.06);border:1.5px solid rgba(255,255,255,0.15);border-radius:12px;padding:16px;color:var(--white);font-family:'Space Grotesk',sans-serif;font-size:1.1rem;text-align:center;outline:none;margin-bottom:14px;transition:border-color 0.15s;}
+  .name-input:focus{border-color:var(--gold);}
+  .name-btn{width:100%;background:var(--gold);color:var(--ink);border:none;border-radius:12px;padding:16px;font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:1rem;cursor:pointer;}
+  .name-error{color:#ff6b6b;font-size:0.85rem;margin-top:8px;min-height:18px;}
 
-  /* ── Header ── */
-  header { position:relative; z-index:1; text-align:center; padding:52px 20px 32px; }
-  .logo-badge {
-    display:inline-block; background:linear-gradient(135deg,var(--gold),#f7c948);
-    color:var(--ink); font-family:'Space Grotesk',sans-serif; font-weight:700;
-    font-size:11px; letter-spacing:3px; text-transform:uppercase;
-    padding:6px 18px; border-radius:100px; margin-bottom:20px;
-  }
-  h1 { font-family:'Space Grotesk',sans-serif; font-size:clamp(2.2rem,5vw,3.6rem); font-weight:700; line-height:1.1; margin-bottom:10px; }
-  h1 span { color:var(--gold); }
-  .tagline { color:var(--soft); font-size:1rem; margin-bottom:0; }
+  /* Top links */
+  .top-links{position:relative;z-index:1;display:flex;justify-content:flex-end;gap:10px;padding:12px 28px 0;}
+  .top-link{padding:8px 16px;border-radius:100px;border:1px solid rgba(255,255,255,0.1);color:var(--soft);font-family:'Space Grotesk',sans-serif;font-size:0.8rem;font-weight:600;text-decoration:none;transition:all 0.2s;}
+  .top-link:hover{color:var(--white);border-color:rgba(255,255,255,0.25);}
 
-  /* ── Change name link ── */
-  .change-name-btn {
-    background:none; border:none; color:var(--soft); font-size:0.8rem; cursor:pointer;
-    text-decoration:underline; margin-top:12px; font-family:'DM Sans',sans-serif;
-  }
-  .change-name-btn:hover { color:var(--white); }
+  /* Header */
+  header{position:relative;z-index:1;text-align:center;padding:40px 20px 28px;}
+  .logo-badge{display:inline-block;background:linear-gradient(135deg,var(--gold),#f7c948);color:var(--ink);font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:11px;letter-spacing:3px;text-transform:uppercase;padding:6px 18px;border-radius:100px;margin-bottom:16px;}
+  h1{font-family:'Space Grotesk',sans-serif;font-size:clamp(2rem,5vw,3.2rem);font-weight:700;line-height:1.1;margin-bottom:8px;}
+  h1 span{color:var(--gold);}
+  .tagline{color:var(--soft);font-size:1rem;}
+  .change-name-btn{background:none;border:none;color:var(--soft);font-size:0.78rem;cursor:pointer;text-decoration:underline;margin-top:10px;font-family:'DM Sans',sans-serif;}
+  .change-name-btn:hover{color:var(--white);}
 
-  /* ── Nav link to trophy + dashboard ── */
-  .top-links {
-    position:relative; z-index:1; display:flex; justify-content:flex-end; gap:10px; padding:12px 28px 0;
-  }
-  .top-link {
-    padding:8px 16px; border-radius:100px; border:1px solid rgba(255,255,255,0.1);
-    color:var(--soft); font-family:'Space Grotesk',sans-serif; font-size:0.8rem; font-weight:600;
-    text-decoration:none; transition:all 0.2s;
-  }
-  .top-link:hover { color:var(--white); border-color:rgba(255,255,255,0.25); }
+  /* Grid */
+  main{position:relative;z-index:1;max-width:960px;margin:0 auto;padding:20px 20px 80px;display:grid;grid-template-columns:1fr 1fr;gap:20px;}
+  @media(max-width:620px){main{grid-template-columns:1fr;}}
 
-  /* ── Cards ── */
-  main { position:relative; z-index:1; max-width:900px; margin:0 auto; padding:20px 20px 80px; display:grid; grid-template-columns:1fr 1fr; gap:28px; }
-  @media(max-width:600px){ main{grid-template-columns:1fr;} }
-  .mission-card {
-    background:var(--panel); border:1px solid rgba(255,255,255,0.07); border-radius:20px;
-    padding:40px 36px; display:flex; flex-direction:column; align-items:flex-start; gap:16px;
-    text-decoration:none; color:inherit; transition:transform 0.2s,box-shadow 0.2s; position:relative; overflow:hidden;
-  }
-  .mission-card::before {
-    content:''; position:absolute; top:-60px; right:-60px; width:180px; height:180px; border-radius:50%; opacity:0.06;
-  }
-  .mission-card.math::before { background:var(--mint); }
-  .mission-card.ela::before  { background:var(--rose); }
-  .mission-card:hover { transform:translateY(-4px); box-shadow:0 20px 60px rgba(0,0,0,0.4); }
-  .card-icon { font-size:2.6rem; line-height:1; }
-  .card-label { font-family:'Space Grotesk',sans-serif; font-size:11px; font-weight:600; letter-spacing:2.5px; text-transform:uppercase; }
-  .math .card-label { color:var(--mint); }
-  .ela  .card-label { color:var(--rose); }
-  .card-title { font-family:'Space Grotesk',sans-serif; font-size:1.9rem; font-weight:700; line-height:1.1; }
-  .card-desc { color:var(--soft); font-size:0.95rem; line-height:1.6; }
-  .card-progress { width:100%; }
-  .card-progress-bar { height:6px; background:rgba(255,255,255,0.08); border-radius:100px; overflow:hidden; margin-bottom:6px; }
-  .card-progress-fill { height:100%; border-radius:100px; transition:width 0.4s; }
-  .math .card-progress-fill { background:var(--mint); }
-  .ela  .card-progress-fill { background:var(--rose); }
-  .card-progress-label { font-size:0.8rem; color:var(--soft); }
-  .card-cta { margin-top:auto; padding-top:16px; font-family:'Space Grotesk',sans-serif; font-weight:600; font-size:0.95rem; display:flex; align-items:center; gap:8px; }
-  .math .card-cta { color:var(--mint); }
-  .ela  .card-cta { color:var(--rose); }
-  footer { position:relative; z-index:1; text-align:center; padding:20px; color:var(--soft); font-size:0.8rem; opacity:0.5; }
+  /* Cards */
+  .mission-card{background:var(--panel);border:1px solid rgba(255,255,255,0.07);border-radius:20px;padding:32px 28px;display:flex;flex-direction:column;gap:12px;text-decoration:none;color:inherit;transition:transform 0.2s,box-shadow 0.2s;position:relative;overflow:hidden;}
+  .mission-card::before{content:'';position:absolute;top:-50px;right:-50px;width:160px;height:160px;border-radius:50%;opacity:0.06;}
+  .mission-card.math::before{background:var(--mint);}
+  .mission-card.ela::before{background:var(--rose);}
+  .mission-card.reading::before{background:var(--violet);}
+  .mission-card.spelling::before{background:var(--orange);}
+  .mission-card:hover{transform:translateY(-4px);box-shadow:0 20px 60px rgba(0,0,0,0.4);}
+  .card-icon{font-size:2.2rem;line-height:1;}
+  .card-label{font-family:'Space Grotesk',sans-serif;font-size:10px;font-weight:600;letter-spacing:2.5px;text-transform:uppercase;}
+  .math .card-label{color:var(--mint);}
+  .ela .card-label{color:var(--rose);}
+  .reading .card-label{color:var(--violet);}
+  .spelling .card-label{color:var(--orange);}
+  .card-title{font-family:'Space Grotesk',sans-serif;font-size:1.6rem;font-weight:700;line-height:1.1;}
+  .card-desc{color:var(--soft);font-size:0.88rem;line-height:1.6;}
+  .card-progress{width:100%;}
+  .card-progress-bar{height:5px;background:rgba(255,255,255,0.08);border-radius:100px;overflow:hidden;margin-bottom:5px;}
+  .card-progress-fill{height:100%;border-radius:100px;transition:width 0.4s;}
+  .math .card-progress-fill{background:var(--mint);}
+  .ela .card-progress-fill{background:var(--rose);}
+  .reading .card-progress-fill{background:var(--violet);}
+  .spelling .card-progress-fill{background:var(--orange);}
+  .card-progress-label{font-size:0.75rem;color:var(--soft);}
+  .card-cta{margin-top:auto;padding-top:12px;font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:0.88rem;}
+  .math .card-cta{color:var(--mint);}
+  .ela .card-cta{color:var(--rose);}
+  .reading .card-cta{color:var(--violet);}
+  .spelling .card-cta{color:var(--orange);}
+
+  footer{position:relative;z-index:1;text-align:center;padding:20px;color:var(--soft);font-size:0.8rem;opacity:0.5;}
 </style>
 </head>
 <body>
 
-<!-- NAME GATE -->
 <div class="name-gate" id="nameGate">
   <div class="name-box">
     <div class="name-rocket">🚀</div>
@@ -149,26 +120,50 @@
 <main>
   <a href="math.html" class="mission-card math">
     <div class="card-icon">➕</div>
-    <div class="card-label">Mission Zone</div>
-    <div class="card-title">Math<br>Missions</div>
-    <p class="card-desc">Numbers, addition, subtraction, place value, and more. 30 missions!</p>
+    <div class="card-label">Mission Zone · 30 missions</div>
+    <div class="card-title">Math Missions</div>
+    <p class="card-desc">Addition, subtraction, place value, comparing numbers, and more.</p>
     <div class="card-progress">
-      <div class="card-progress-bar"><div class="card-progress-fill" id="mathProgressFill" style="width:0%"></div></div>
-      <div class="card-progress-label" id="mathProgressLabel">0 of 30 missions completed</div>
+      <div class="card-progress-bar"><div class="card-progress-fill" id="mathFill" style="width:0%"></div></div>
+      <div class="card-progress-label" id="mathLabel">0 of 30 completed</div>
     </div>
     <div class="card-cta">Launch Math Missions →</div>
   </a>
 
   <a href="ela.html" class="mission-card ela">
     <div class="card-icon">📖</div>
-    <div class="card-label">Mission Zone</div>
-    <div class="card-title">ELA<br>Missions</div>
-    <p class="card-desc">Nouns, verbs, adjectives, and words! 60 language missions to conquer.</p>
+    <div class="card-label">Mission Zone · 60 missions</div>
+    <div class="card-title">ELA Missions</div>
+    <p class="card-desc">Nouns, verbs, adjectives, sentence types, synonyms, and more.</p>
     <div class="card-progress">
-      <div class="card-progress-bar"><div class="card-progress-fill" id="elaProgressFill" style="width:0%"></div></div>
-      <div class="card-progress-label" id="elaProgressLabel">0 of 60 missions completed</div>
+      <div class="card-progress-bar"><div class="card-progress-fill" id="elaFill" style="width:0%"></div></div>
+      <div class="card-progress-label" id="elaLabel">0 of 60 completed</div>
     </div>
     <div class="card-cta">Launch ELA Missions →</div>
+  </a>
+
+  <a href="reading.html" class="mission-card reading">
+    <div class="card-icon">📚</div>
+    <div class="card-label">Mission Zone · 20 passages</div>
+    <div class="card-title">Reading Missions</div>
+    <p class="card-desc">Read short stories and answer comprehension questions about each one.</p>
+    <div class="card-progress">
+      <div class="card-progress-bar"><div class="card-progress-fill" id="readFill" style="width:0%"></div></div>
+      <div class="card-progress-label" id="readLabel">0 of 20 completed</div>
+    </div>
+    <div class="card-cta">Launch Reading Missions →</div>
+  </a>
+
+  <a href="spelling.html" class="mission-card spelling">
+    <div class="card-icon">🔤</div>
+    <div class="card-label">Mission Zone · 20 missions</div>
+    <div class="card-title">Spelling Missions</div>
+    <p class="card-desc">Listen to each word and spell it correctly. 10 words per mission!</p>
+    <div class="card-progress">
+      <div class="card-progress-bar"><div class="card-progress-fill" id="spellFill" style="width:0%"></div></div>
+      <div class="card-progress-label" id="spellLabel">0 of 20 completed</div>
+    </div>
+    <div class="card-cta">Launch Spelling Missions →</div>
   </a>
 </main>
 
@@ -176,50 +171,48 @@
 
 <script src="engine.js"></script>
 <script>
-const ME = window.MissionEngine;
+const ME=window.MissionEngine;
 
-function submitName() {
-  const val = document.getElementById('nameInput').value.trim();
-  if (val.length < 1) {
-    document.getElementById('nameError').textContent = 'Please type your name!';
-    return;
-  }
+function submitName(){
+  const val=document.getElementById('nameInput').value.trim();
+  if(val.length<1){document.getElementById('nameError').textContent='Please type your name!';return;}
   ME.setStudentName(val);
   document.getElementById('nameGate').classList.add('hidden');
   updatePage();
 }
-
-function changeName() {
-  document.getElementById('nameInput').value = '';
-  document.getElementById('nameError').textContent = '';
+function changeName(){
+  document.getElementById('nameInput').value=''; document.getElementById('nameError').textContent='';
   document.getElementById('nameGate').classList.remove('hidden');
   document.getElementById('nameInput').focus();
 }
+document.getElementById('nameInput').addEventListener('keydown',e=>{if(e.key==='Enter')submitName();});
 
-document.getElementById('nameInput').addEventListener('keydown', e => {
-  if (e.key === 'Enter') submitName();
-});
-
-function countCompleted(subject, total) {
-  const p = ME.getProgress(subject);
-  let count = 0;
-  for (let i = 1; i <= total; i++) { if (p[`best_${i}`] != null) count++; }
-  return count;
+function countDone(subject,total){
+  const p=ME.getProgress(subject); let n=0;
+  for(let i=1;i<=total;i++) if(p[`best_${i}`]!=null) n++;
+  return n;
 }
 
-function updatePage() {
-  const name = ME.getStudentName();
-  if (!name) { document.getElementById('nameGate').classList.remove('hidden'); return; }
+function updatePage(){
+  const name=ME.getStudentName();
+  if(!name){document.getElementById('nameGate').classList.remove('hidden');return;}
+  document.getElementById('welcomeName').textContent=name;
 
-  document.getElementById('welcomeName').textContent = name;
+  const mathDone=countDone('math',30);
+  document.getElementById('mathFill').style.width=`${(mathDone/30)*100}%`;
+  document.getElementById('mathLabel').textContent=`${mathDone} of 30 completed`;
 
-  const mathDone = countCompleted('math', 30);
-  document.getElementById('mathProgressFill').style.width = `${(mathDone/30)*100}%`;
-  document.getElementById('mathProgressLabel').textContent = `${mathDone} of 30 missions completed`;
+  const elaDone=countDone('ela',60);
+  document.getElementById('elaFill').style.width=`${(elaDone/60)*100}%`;
+  document.getElementById('elaLabel').textContent=`${elaDone} of 60 completed`;
 
-  const elaDone = countCompleted('ela', 60);
-  document.getElementById('elaProgressFill').style.width = `${(elaDone/60)*100}%`;
-  document.getElementById('elaProgressLabel').textContent = `${elaDone} of 60 missions completed`;
+  const readDone=countDone('reading',20);
+  document.getElementById('readFill').style.width=`${(readDone/20)*100}%`;
+  document.getElementById('readLabel').textContent=`${readDone} of 20 completed`;
+
+  const spellDone=countDone('spelling',20);
+  document.getElementById('spellFill').style.width=`${(spellDone/20)*100}%`;
+  document.getElementById('spellLabel').textContent=`${spellDone} of 20 completed`;
 }
 
 updatePage();

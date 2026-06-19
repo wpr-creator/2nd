@@ -1,0 +1,672 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Spelling Missions — Mission Academy</title>
+<link rel="stylesheet" href="styles.css">
+<style>
+  .spell-theme { --accent: #fb923c; }
+  .spell-accent { color: #fb923c !important; }
+  .spell-theme .nav-tab.active-spelling { background: rgba(251,146,60,0.15); color: #fb923c; border-color: #fb923c; }
+  .spell-theme .mission-btn:hover:not(.locked) { border-color: rgba(251,146,60,0.35); }
+  .spell-theme .q-progress-fill { background: #fb923c; }
+  .spell-theme .q-mission-label { color: #fb923c; }
+
+  /* Speaker button */
+  .speak-area {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 14px;
+    margin-bottom: 24px;
+  }
+  .speak-btn {
+    background: linear-gradient(135deg, rgba(251,146,60,0.2), rgba(251,146,60,0.08));
+    border: 2px solid rgba(251,146,60,0.4);
+    border-radius: 50%;
+    width: 90px; height: 90px;
+    font-size: 2.4rem;
+    cursor: pointer;
+    transition: transform 0.15s, box-shadow 0.15s;
+    display: flex; align-items: center; justify-content: center;
+    color: #fb923c;
+  }
+  .speak-btn:hover { transform: scale(1.07); box-shadow: 0 0 0 8px rgba(251,146,60,0.12); }
+  .speak-btn:active { transform: scale(0.96); }
+  .speak-btn.speaking { animation: speakPulse 0.8s ease-in-out infinite; }
+  @keyframes speakPulse {
+    0%,100% { box-shadow: 0 0 0 0 rgba(251,146,60,0.4); }
+    50%      { box-shadow: 0 0 0 14px rgba(251,146,60,0); }
+  }
+  .speak-label {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 0.85rem;
+    color: var(--soft);
+    font-weight: 600;
+  }
+  .speak-sub {
+    font-size: 0.78rem;
+    color: var(--dim);
+    text-align: center;
+    margin-top: -8px;
+  }
+
+  /* Blank letter display */
+  .word-blanks {
+    display: flex;
+    gap: 8px;
+    justify-content: center;
+    flex-wrap: wrap;
+    margin-bottom: 20px;
+  }
+  .letter-blank {
+    width: 36px; height: 42px;
+    border-bottom: 2px solid rgba(255,255,255,0.2);
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 1.3rem;
+    font-weight: 700;
+    color: var(--white);
+    transition: border-color 0.2s;
+  }
+  .letter-blank.filled { border-color: #fb923c; }
+
+  /* Sentence context */
+  .spell-context {
+    background: rgba(251,146,60,0.06);
+    border: 1px solid rgba(251,146,60,0.15);
+    border-radius: 10px;
+    padding: 10px 14px;
+    font-size: 0.9rem;
+    color: var(--soft);
+    margin-bottom: 16px;
+    text-align: center;
+    line-height: 1.5;
+  }
+  .spell-context strong { color: var(--white); }
+</style>
+</head>
+<body class="spell-theme">
+
+<nav class="top-nav">
+  <a href="index.html" class="nav-logo">🚀 Mission <span>Academy</span></a>
+  <div style="display:flex;align-items:center;gap:12px;">
+    <span class="nav-student-name" id="navName"></span>
+    <div class="nav-tabs">
+      <a href="math.html"     class="nav-tab">➕ Math</a>
+      <a href="ela.html"      class="nav-tab">📖 ELA</a>
+      <a href="reading.html"  class="nav-tab">📚 Reading</a>
+      <a href="spelling.html" class="nav-tab active-spelling">🔤 Spelling</a>
+      <a href="trophies.html" class="nav-tab">🏆</a>
+    </div>
+  </div>
+</nav>
+
+<div class="page-header">
+  <div class="page-eyebrow spell-accent">2nd Grade · 20 Missions</div>
+  <h1 class="page-title">Spelling Missions</h1>
+  <p class="page-subtitle">Listen to the word, then spell it! Press the 🔊 button to hear it again.</p>
+</div>
+
+<div class="grid-summary" id="gridSummary"></div>
+<div class="missions-grid" id="missionsGrid"></div>
+<div class="confetti-wrap" id="confettiWrap"></div>
+
+<!-- LOCK MODAL -->
+<div class="modal-overlay hidden" id="lockModal">
+  <div class="modal-box">
+    <button class="q-close-btn" onclick="closeLockModal()">✕</button>
+    <div class="lock-icon">🔒</div>
+    <h2 class="lock-title">Checkpoint Mission</h2>
+    <p class="lock-desc">Ask your teacher for the unlock code to continue!</p>
+    <input class="lock-input" id="lockInput" type="password" placeholder="Enter code" maxlength="12">
+    <div class="lock-error" id="lockError"></div>
+    <button class="lock-submit" onclick="submitLockCode()">Unlock Mission</button>
+    <button class="lock-cancel" onclick="closeLockModal()">Go back</button>
+  </div>
+</div>
+
+<!-- SPELLING MODAL -->
+<div class="modal-overlay hidden" id="spellingModal">
+  <div class="modal-box">
+    <button class="q-close-btn" onclick="closeSpellingModal()">✕</button>
+    <div class="q-header">
+      <div>
+        <div class="q-mission-label spell-accent" id="qMissionLabel"></div>
+        <div class="q-number" id="qNumber"></div>
+      </div>
+      <div class="q-progress-bar"><div class="q-progress-fill" id="qProgressFill" style="width:0%"></div></div>
+    </div>
+    <div class="beat-banner hidden" id="beatBanner">
+      <span>🎯</span>
+      <span>Your best: <span class="beat-score" id="beatScore"></span> — try to beat it!</span>
+    </div>
+    <div class="streak-banner" id="streakBanner"></div>
+
+    <!-- Speaker -->
+    <div class="speak-area">
+      <button class="speak-btn" id="speakBtn" onclick="speakWord()">🔊</button>
+      <div class="speak-label">Tap to hear the word</div>
+      <div class="speak-sub">You can tap as many times as you need!</div>
+    </div>
+
+    <!-- Letter count blanks -->
+    <div class="word-blanks" id="wordBlanks"></div>
+
+    <!-- Context sentence -->
+    <div class="spell-context" id="spellContext"></div>
+
+    <!-- Input -->
+    <div class="q-input-row">
+      <input class="q-input" id="spellingInput" type="text" placeholder="Type your spelling…" autocomplete="off" spellcheck="false">
+      <button class="q-submit-btn" onclick="checkSpelling()" style="background:#fb923c;">Check</button>
+    </div>
+    <div class="hint-row">
+      <button class="hint-btn" id="hintBtn" onclick="showHint()" style="color:#fb923c;border-color:rgba(251,146,60,0.3);">💡 Hint</button>
+    </div>
+    <div class="hint-box hidden" id="hintBox" style="color:#fb923c;border-color:rgba(251,146,60,0.2);background:rgba(251,146,60,0.06);"></div>
+    <div class="q-feedback" id="qFeedback"></div>
+    <div id="qActionArea"></div>
+  </div>
+</div>
+
+<!-- RESULT MODAL -->
+<div class="modal-overlay hidden" id="resultModal">
+  <div class="modal-box">
+    <div class="result-emoji" id="resultEmoji"></div>
+    <div class="result-title" id="resultTitle"></div>
+    <div class="result-score" id="resultScore"></div>
+    <div class="result-subtitle" id="resultSubtitle"></div>
+    <div id="resultBeatMsg" style="text-align:center;color:var(--success);font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:0.95rem;margin-bottom:16px;"></div>
+    <div class="result-btns">
+      <button class="result-btn primary" onclick="retryMission()">Try Again</button>
+      <button class="result-btn secondary" onclick="closeResultModal()">Mission List</button>
+    </div>
+  </div>
+</div>
+
+<script src="engine.js"></script>
+<script>
+// ─── Spelling Word Banks ───────────────────────────────────────────────────
+const SPELL_MISSIONS = [
+  // 1: Short vowel CVC words
+  { name: "Short Vowel Words", words: [
+    {w:"cat",  ctx:"The ___ sat on the mat.",      hint:"Starts with C, rhymes with bat"},
+    {w:"dog",  ctx:"My ___ likes to run.",         hint:"Starts with D, man's best friend"},
+    {w:"sun",  ctx:"The ___ is bright today.",     hint:"Starts with S, shines in the sky"},
+    {w:"bed",  ctx:"I sleep in my ___.",            hint:"Starts with B, you sleep on it"},
+    {w:"cup",  ctx:"She drank from a ___.",         hint:"Starts with C, you drink from it"},
+    {w:"hat",  ctx:"He wore a red ___.",            hint:"Starts with H, you wear it on your head"},
+    {w:"pig",  ctx:"The ___ rolled in the mud.",   hint:"Starts with P, a farm animal"},
+    {w:"hop",  ctx:"Rabbits like to ___.",          hint:"Starts with H, what a rabbit does"},
+    {w:"jet",  ctx:"The ___ flew high in the sky.",hint:"Starts with J, a fast airplane"},
+    {w:"bug",  ctx:"A tiny ___ crawled on the leaf.",hint:"Starts with B, a small insect"},
+  ]},
+  // 2: Long vowel silent-e words
+  { name: "Long Vowel Words", words: [
+    {w:"cake",  ctx:"She blew out the candles on her birthday ___.",hint:"Starts with C, a birthday treat"},
+    {w:"bike",  ctx:"He rode his ___ to school.",   hint:"Starts with B, you pedal it"},
+    {w:"home",  ctx:"We walked ___ after school.",  hint:"Starts with H, where you live"},
+    {w:"cute",  ctx:"The puppy is so ___.",         hint:"Starts with C, means adorable"},
+    {w:"pine",  ctx:"A ___ tree is always green.",  hint:"Starts with P, an evergreen tree"},
+    {w:"dive",  ctx:"The swimmer did a big ___.",   hint:"Starts with D, jumping into water"},
+    {w:"late",  ctx:"He was ___ to school today.", hint:"Starts with L, opposite of early"},
+    {w:"hope",  ctx:"I ___ it doesn't rain.",      hint:"Starts with H, to wish for something"},
+    {w:"stone", ctx:"She threw a ___ into the pond.",hint:"Starts with S, a small rock"},
+    {w:"smile", ctx:"She wore a big ___ all day.", hint:"Starts with S, what you do when happy"},
+  ]},
+  // 3: Blends and digraphs
+  { name: "Blends & Digraphs", words: [
+    {w:"ship",  ctx:"The big ___ sailed across the ocean.",hint:"Starts with SH, travels on water"},
+    {w:"chip",  ctx:"He ate a potato ___.",         hint:"Starts with CH, a crunchy snack"},
+    {w:"that",  ctx:"___ is my favorite book.",     hint:"Starts with TH, a pointing word"},
+    {w:"whip",  ctx:"The baker used a ___ for the cream.",hint:"Starts with WH, a cooking tool"},
+    {w:"clap",  ctx:"The audience began to ___.",   hint:"Starts with CL, what hands do"},
+    {w:"drip",  ctx:"Water began to ___ from the faucet.",hint:"Starts with DR, water falling slowly"},
+    {w:"flag",  ctx:"The ___ waved in the wind.",  hint:"Starts with FL, flies on a pole"},
+    {w:"trip",  ctx:"We went on a field ___.",      hint:"Starts with TR, a short journey"},
+    {w:"shop",  ctx:"We went to the ___ for milk.", hint:"Starts with SH, a place to buy things"},
+    {w:"chin",  ctx:"She rested her ___ in her hand.",hint:"Starts with CH, part of your face"},
+  ]},
+  // 4: Double letters
+  { name: "Double Letter Words", words: [
+    {w:"ball",  ctx:"Kick the ___ into the goal.",  hint:"Has LL, you play sports with it"},
+    {w:"bell",  ctx:"The ___ rang at the end of class.",hint:"Has LL, it makes a ringing sound"},
+    {w:"hill",  ctx:"We ran up the big ___.",       hint:"Has LL, a small mountain"},
+    {w:"miss",  ctx:"I ___ my grandma when she goes home.",hint:"Has SS, to feel sad someone is gone"},
+    {w:"well",  ctx:"She did very ___ on the test.", hint:"Has LL, also a place to get water"},
+    {w:"egg",   ctx:"The hen laid an ___.",          hint:"Has GG, breakfast food"},
+    {w:"add",   ctx:"Can you ___ these numbers?",   hint:"Has DD, to put numbers together"},
+    {w:"odd",   ctx:"7 is an ___ number.",          hint:"Has DD, not even"},
+    {w:"buzz",  ctx:"The bee began to ___.",        hint:"Has ZZ, the sound a bee makes"},
+    {w:"full",  ctx:"After dinner, I felt ___.",    hint:"Has LL, not empty"},
+  ]},
+  // 5: Word families -ight, -ight, -ay, -ow
+  { name: "Word Families", words: [
+    {w:"light",  ctx:"Please turn on the ___ .",    hint:"Ends with IGHT, rhymes with night"},
+    {w:"night",  ctx:"Stars come out at ___.",      hint:"Ends with IGHT, opposite of day"},
+    {w:"right",  ctx:"Turn ___ at the stop sign.",  hint:"Ends with IGHT, opposite of left"},
+    {w:"play",   ctx:"Let's go outside and ___.",   hint:"Ends with AY, what kids do at recess"},
+    {w:"stay",   ctx:"Please ___ at home today.",   hint:"Ends with AY, to remain somewhere"},
+    {w:"rain",   ctx:"Don't forget your umbrella when it will ___.",hint:"Ends with AIN, water from clouds"},
+    {w:"train",  ctx:"We rode the ___ to the city.", hint:"Ends with AIN, runs on tracks"},
+    {w:"snow",   ctx:"Let's play in the ___.",      hint:"Ends with OW, white and cold"},
+    {w:"grow",   ctx:"Plants need water to ___.",   hint:"Ends with OW, to get bigger"},
+    {w:"throw",  ctx:"Can you ___ me the ball?",   hint:"Ends with OW, toss through the air"},
+  ]},
+  // 6: Compound words
+  { name: "Compound Words", words: [
+    {w:"sunshine",   ctx:"We played in the warm ___.",  hint:"SUN + SHINE"},
+    {w:"rainbow",    ctx:"After the rain we saw a ___.", hint:"RAIN + BOW"},
+    {w:"backpack",   ctx:"Put your books in your ___.",  hint:"BACK + PACK"},
+    {w:"bedroom",    ctx:"I sleep in my ___.",           hint:"BED + ROOM"},
+    {w:"outside",    ctx:"Let's go ___ to play.",       hint:"OUT + SIDE"},
+    {w:"birthday",   ctx:"Today is my ___!",            hint:"BIRTH + DAY"},
+    {w:"snowball",   ctx:"We made a giant ___.",        hint:"SNOW + BALL"},
+    {w:"starfish",   ctx:"We found a ___ at the beach.", hint:"STAR + FISH"},
+    {w:"cupcake",    ctx:"She decorated a ___ with frosting.",hint:"CUP + CAKE"},
+    {w:"football",   ctx:"We played ___ at recess.",    hint:"FOOT + BALL"},
+  ]},
+  // 7: -ing words
+  { name: "Words Ending in -ing", words: [
+    {w:"running",  ctx:"She is ___ to catch the bus.",  hint:"RUN + NING (double the N)"},
+    {w:"jumping",  ctx:"The kids are ___ on the trampoline.",hint:"JUMP + ING"},
+    {w:"singing",  ctx:"He is ___ his favorite song.",  hint:"SING + ING"},
+    {w:"cooking",  ctx:"Mom is ___ dinner tonight.",    hint:"COOK + ING"},
+    {w:"reading",  ctx:"She loves ___ before bed.",     hint:"READ + ING"},
+    {w:"playing",  ctx:"The children are ___ outside.", hint:"PLAY + ING"},
+    {w:"writing",  ctx:"He is ___ a story.",            hint:"WRITE - E + ING"},
+    {w:"swimming", ctx:"The fish are ___ in the tank.", hint:"SWIM + MING (double the M)"},
+    {w:"smiling",  ctx:"She kept ___ all day.",         hint:"SMILE - E + ING"},
+    {w:"helping",  ctx:"He is ___ his sister.",         hint:"HELP + ING"},
+  ]},
+  // 8: -ed words past tense
+  { name: "Past Tense -ed Words", words: [
+    {w:"jumped",  ctx:"She ___ over the puddle.",       hint:"JUMP + ED"},
+    {w:"walked",  ctx:"We ___ to school today.",        hint:"WALK + ED"},
+    {w:"played",  ctx:"The kids ___ at the park.",      hint:"PLAY + ED"},
+    {w:"cooked",  ctx:"Dad ___ a big dinner.",          hint:"COOK + ED"},
+    {w:"painted", ctx:"She ___ a beautiful picture.",   hint:"PAINT + ED"},
+    {w:"smiled",  ctx:"He ___ when he saw the puppy.",  hint:"SMILE - E + ED (drop the e)"},
+    {w:"chased",  ctx:"The dog ___ the cat.",           hint:"CHASE - E + ED"},
+    {w:"stopped", ctx:"The bus ___ at the corner.",     hint:"STOP + PED (double the P)"},
+    {w:"helped",  ctx:"She ___ her mom clean up.",      hint:"HELP + ED"},
+    {w:"looked",  ctx:"He ___ both ways before crossing.",hint:"LOOK + ED"},
+  ]},
+  // 9: Sight words
+  { name: "Sight Words Set 1", words: [
+    {w:"because",  ctx:"I stayed home ___ I was sick.", hint:"Starts with B, explains a reason"},
+    {w:"friend",   ctx:"She is my best ___.",           hint:"Starts with FR, someone you like"},
+    {w:"again",    ctx:"Can you say that ___?",         hint:"Starts with AG, one more time"},
+    {w:"before",   ctx:"Wash your hands ___ you eat.", hint:"Starts with B, earlier than something"},
+    {w:"every",    ctx:"I brush my teeth ___ morning.", hint:"Starts with E, each one"},
+    {w:"people",   ctx:"Many ___ came to the parade.", hint:"Starts with P, more than one person"},
+    {w:"school",   ctx:"We learn at ___.",              hint:"Starts with S, where you learn"},
+    {w:"could",    ctx:"She ___ run very fast.",        hint:"Starts with C, past form of can"},
+    {w:"would",    ctx:"He ___ like some water please.",hint:"Starts with W, past form of will"},
+    {w:"should",   ctx:"You ___ eat your vegetables.", hint:"Starts with SH, telling someone what is right"},
+  ]},
+  // 10: Sight words 2
+  { name: "Sight Words Set 2", words: [
+    {w:"water",    ctx:"Please drink your ___.",        hint:"Starts with W, you drink it"},
+    {w:"always",   ctx:"She ___ smiles at everyone.", hint:"Starts with AL, every time"},
+    {w:"never",    ctx:"I have ___ been to the moon.", hint:"Starts with N, not ever"},
+    {w:"together", ctx:"Let's work ___ as a team.",   hint:"Starts with T, as a group"},
+    {w:"around",   ctx:"We walked ___ the block.",    hint:"Starts with AR, in a circle"},
+    {w:"enough",   ctx:"Do we have ___ chairs?",      hint:"Starts with E, as much as needed"},
+    {w:"through",  ctx:"She walked ___ the door.",    hint:"Starts with TH, from one side to the other"},
+    {w:"thought",  ctx:"He ___ about the answer.",    hint:"Starts with TH, past tense of think"},
+    {w:"brought",  ctx:"She ___ her lunch to school.",hint:"Starts with BR, past tense of bring"},
+    {w:"though",   ctx:"Even ___ it rained, we had fun.",hint:"Starts with TH, rhymes with go"},
+  ]},
+  // 11: Animals
+  { name: "Animal Words", words: [
+    {w:"rabbit",  ctx:"The ___ hopped across the yard.",  hint:"Starts with R, has long ears"},
+    {w:"turtle",  ctx:"The ___ moved slowly on the path.",hint:"Starts with T, has a shell"},
+    {w:"monkey",  ctx:"The ___ swung from tree to tree.", hint:"Starts with M, loves bananas"},
+    {w:"parrot",  ctx:"The ___ can talk and repeat words.",hint:"Starts with P, a colorful bird"},
+    {w:"lizard",  ctx:"A ___ sunned itself on the rock.", hint:"Starts with L, a reptile"},
+    {w:"spider",  ctx:"A ___ spun a web in the corner.", hint:"Starts with S, has 8 legs"},
+    {w:"squirrel",ctx:"The ___ hid nuts in the tree.",   hint:"Starts with SQ, likes to collect acorns"},
+    {w:"dolphin", ctx:"The ___ leaped out of the water.",hint:"Starts with D, a smart sea mammal"},
+    {w:"penguin", ctx:"The ___ waddled across the ice.",  hint:"Starts with P, lives in cold places"},
+    {w:"leopard", ctx:"The ___ has spots on its fur.",   hint:"Starts with L, a big spotted cat"},
+  ]},
+  // 12: Nature words
+  { name: "Nature Words", words: [
+    {w:"flower", ctx:"She picked a pretty ___ from the garden.",hint:"Starts with F, grows in gardens"},
+    {w:"forest", ctx:"Many animals live in the ___.",            hint:"Starts with F, a big area of trees"},
+    {w:"mountain",ctx:"Snow sits on top of the ___.",           hint:"Starts with M, very tall land"},
+    {w:"thunder", ctx:"We heard loud ___ during the storm.",    hint:"Starts with TH, a loud storm sound"},
+    {w:"shadow",  ctx:"My ___ was longer in the evening.",      hint:"Starts with SH, a dark shape made by light"},
+    {w:"breeze",  ctx:"A cool ___ blew through the window.",   hint:"Starts with BR, a light wind"},
+    {w:"pebble",  ctx:"She picked up a smooth ___ by the lake.",hint:"Starts with P, a small stone"},
+    {w:"puddle",  ctx:"He jumped over the ___ on the sidewalk.",hint:"Starts with P, a small pool of water"},
+    {w:"stream",  ctx:"Fish swam in the clear ___.",            hint:"Starts with STR, a small river"},
+    {w:"garden",  ctx:"We grew tomatoes in our ___.",           hint:"Starts with G, where plants grow"},
+  ]},
+  // 13: Food words
+  { name: "Food Words", words: [
+    {w:"apple",   ctx:"She packed an ___ in her lunch.",        hint:"Starts with A, a red or green fruit"},
+    {w:"bread",   ctx:"He spread butter on the ___.",          hint:"Starts with BR, you make sandwiches with it"},
+    {w:"cheese",  ctx:"She put ___ on her sandwich.",          hint:"Starts with CH, yellow and melts"},
+    {w:"orange",  ctx:"He peeled an ___ for a snack.",        hint:"Starts with O, a citrus fruit"},
+    {w:"carrot",  ctx:"Rabbits love to eat ___s.",            hint:"Starts with C, an orange vegetable"},
+    {w:"grapes",  ctx:"She washed a bunch of ___.",           hint:"Starts with GR, small purple or green fruits"},
+    {w:"cookie",  ctx:"Grandma baked a chocolate chip ___.", hint:"Starts with C, a sweet baked treat"},
+    {w:"noodle",  ctx:"He slurped a long ___.",              hint:"Starts with N, used in soup and pasta"},
+    {w:"butter",  ctx:"She spread ___ on her toast.",        hint:"Starts with B, yellow and creamy"},
+    {w:"muffin",  ctx:"She grabbed a blueberry ___ for breakfast.",hint:"Starts with M, a small baked treat"},
+  ]},
+  // 14: School words
+  { name: "School Words", words: [
+    {w:"pencil",  ctx:"He sharpened his ___ before the test.", hint:"Starts with P, you write with it"},
+    {w:"eraser",  ctx:"She used an ___ to fix her mistake.",  hint:"Starts with E, removes pencil marks"},
+    {w:"folder",  ctx:"Keep your papers in your ___.",        hint:"Starts with F, holds papers"},
+    {w:"library", ctx:"We borrowed books from the ___.",      hint:"Starts with L, a place full of books"},
+    {w:"marker",  ctx:"She wrote her name with a ___.",       hint:"Starts with M, writes in color"},
+    {w:"journal", ctx:"He wrote about his day in his ___.",  hint:"Starts with J, a writing book"},
+    {w:"lesson",  ctx:"Today's ___ was about fractions.",     hint:"Starts with L, something you are taught"},
+    {w:"project", ctx:"We worked on our science ___ all week.",hint:"Starts with P, a big class assignment"},
+    {w:"science", ctx:"___ class was very interesting today.",hint:"Starts with SC, a subject in school"},
+    {w:"subject", ctx:"Math is my favorite ___ in school.",  hint:"Starts with S, a topic you study"},
+  ]},
+  // 15: Action words
+  { name: "Action Words (Verbs)", words: [
+    {w:"climb",  ctx:"She likes to ___ the jungle gym.",      hint:"Starts with CL, going up"},
+    {w:"crawl",  ctx:"The baby began to ___ across the floor.",hint:"Starts with CR, moving on hands and knees"},
+    {w:"giggle", ctx:"The joke made her ___.",                hint:"Starts with G, a small laugh"},
+    {w:"whisper",ctx:"Please ___ in the library.",           hint:"Starts with WH, talking very softly"},
+    {w:"scream", ctx:"She let out a big ___ on the roller coaster.",hint:"Starts with SCR, a very loud yell"},
+    {w:"sprint", ctx:"He did a fast ___ to the finish line.",hint:"Starts with SPR, running very fast"},
+    {w:"splash", ctx:"She did a big ___ in the pool.",       hint:"Starts with SPL, water flying around"},
+    {w:"wobble", ctx:"The table started to ___ on the uneven floor.",hint:"Starts with W, shaking back and forth"},
+    {w:"stumble",ctx:"He started to ___ on the rocky path.",hint:"Starts with ST, almost falling"},
+    {w:"stretch",ctx:"Remember to ___ before you run.",     hint:"Starts with STR, making muscles longer"},
+  ]},
+  // 16: -er -est endings
+  { name: "Comparing Words (-er, -est)", words: [
+    {w:"taller",  ctx:"Maria is ___ than her brother.",       hint:"TALL + ER"},
+    {w:"tallest", ctx:"She is the ___ person in the class.",  hint:"TALL + EST"},
+    {w:"faster",  ctx:"The cheetah is ___ than the horse.",   hint:"FAST + ER"},
+    {w:"fastest", ctx:"The cheetah is the ___ land animal.",  hint:"FAST + EST"},
+    {w:"bigger",  ctx:"An elephant is ___ than a dog.",       hint:"BIG + GER (double the G)"},
+    {w:"biggest", ctx:"The blue whale is the ___ animal.",    hint:"BIG + GEST (double the G)"},
+    {w:"brighter",ctx:"This star is ___ than that one.",      hint:"BRIGHT + ER"},
+    {w:"softer",  ctx:"The pillow is ___ than the chair.",    hint:"SOFT + ER"},
+    {w:"colder",  ctx:"January is ___ than October.",         hint:"COLD + ER"},
+    {w:"coldest", ctx:"Winter is the ___ season.",            hint:"COLD + EST"},
+  ]},
+  // 17: Contractions spelling
+  { name: "Spelling Contractions", words: [
+    {w:"don't",    ctx:"I ___ like spicy food.",              hint:"DO + NOT = don't"},
+    {w:"can't",    ctx:"She ___ reach the top shelf.",        hint:"CAN + NOT = can't"},
+    {w:"isn't",    ctx:"That ___ the right answer.",          hint:"IS + NOT = isn't"},
+    {w:"doesn't",  ctx:"He ___ like to wake up early.",      hint:"DOES + NOT = doesn't"},
+    {w:"won't",    ctx:"The dog ___ stop barking.",           hint:"WILL + NOT = won't (irregular)"},
+    {w:"I'm",      ctx:"___ going to the park after school.", hint:"I + AM = I'm"},
+    {w:"they're",  ctx:"___ coming to the party.",            hint:"THEY + ARE = they're"},
+    {w:"we're",    ctx:"___ going on a field trip.",          hint:"WE + ARE = we're"},
+    {w:"it's",     ctx:"___ raining outside.",                hint:"IT + IS = it's"},
+    {w:"didn't",   ctx:"She ___ finish her homework.",        hint:"DID + NOT = didn't"},
+  ]},
+  // 18: Tricky words
+  { name: "Tricky Words", words: [
+    {w:"eight",   ctx:"An octopus has ___ arms.",             hint:"Starts with E, the number after 7"},
+    {w:"write",   ctx:"Please ___ your name at the top.",     hint:"Starts with WR, what you do with a pencil"},
+    {w:"knight",  ctx:"The ___ wore shining armor.",          hint:"Starts with KN, a warrior on a horse"},
+    {w:"answer",  ctx:"Do you know the ___ to the question?", hint:"Starts with AN, a reply"},
+    {w:"climb",   ctx:"Can you ___ that tree?",               hint:"Starts with CL, the B is silent"},
+    {w:"island",  ctx:"They sailed to a tiny ___.",           hint:"Starts with IS, land surrounded by water"},
+    {w:"listen",  ctx:"Please ___ carefully to the directions.",hint:"Starts with L, the T is silent"},
+    {w:"pretty",  ctx:"She wore a ___ dress to the party.",  hint:"Starts with PR, means beautiful"},
+    {w:"which",   ctx:"___ book do you want to read?",        hint:"Starts with WH, a choosing word"},
+    {w:"watch",   ctx:"He checked his ___ for the time.",    hint:"Starts with W, tells time — also to observe"},
+  ]},
+  // 19: Feelings words
+  { name: "Feelings Words", words: [
+    {w:"happy",   ctx:"She felt ___ on her birthday.",        hint:"Starts with H, a good feeling"},
+    {w:"scared",  ctx:"He was ___ of the loud thunder.",      hint:"Starts with SC, afraid feeling"},
+    {w:"angry",   ctx:"She felt ___ when her toy was broken.",hint:"Starts with A, mad feeling"},
+    {w:"nervous", ctx:"He felt ___ before his first game.",   hint:"Starts with N, worried feeling"},
+    {w:"proud",   ctx:"She felt ___ after winning the race.", hint:"Starts with PR, feeling good about yourself"},
+    {w:"lonely",  ctx:"He felt ___ when his friend moved away.",hint:"Starts with L, feeling alone"},
+    {w:"excited", ctx:"She was ___ about the field trip.",    hint:"Starts with EX, very happy and eager"},
+    {w:"worried", ctx:"He was ___ that he forgot his homework.",hint:"Starts with W, feeling anxious"},
+    {w:"gentle",  ctx:"She was ___ when she held the baby.",  hint:"Starts with G, soft and kind"},
+    {w:"patient", ctx:"He was ___ while waiting in line.",   hint:"Starts with P, able to wait calmly"},
+  ]},
+  // 20: Mixed challenge
+  { name: "Challenge Words", words: [
+    {w:"journey",  ctx:"They went on a long ___ across the land.",hint:"Starts with J, a long trip"},
+    {w:"village",  ctx:"The small ___ had only ten houses.",      hint:"Starts with V, a tiny town"},
+    {w:"treasure", ctx:"The pirates found buried ___.",           hint:"Starts with TR, something very valuable"},
+    {w:"adventure",ctx:"They went on a wild ___ in the forest.", hint:"Starts with AD, an exciting experience"},
+    {w:"imagine",  ctx:"Can you ___ a world without music?",     hint:"Starts with IM, to picture in your mind"},
+    {w:"celebrate",ctx:"Let's ___ your amazing work!",           hint:"Starts with CE, to do something special for a good event"},
+    {w:"discover", ctx:"Scientists love to ___ new things.",      hint:"Starts with DIS, to find something new"},
+    {w:"whisper",  ctx:"She had to ___ so no one else could hear.",hint:"Starts with WH, talking very quietly"},
+    {w:"shoulder", ctx:"She tapped him on the ___.",              hint:"Starts with SH, part of your body between neck and arm"},
+    {w:"question", ctx:"She raised her hand to ask a ___.",      hint:"Starts with QU, something you ask"},
+  ]},
+];
+
+const SUBJECT = 'spelling';
+const ME = window.MissionEngine;
+let currentMission=null, wordList=[], wIndex=0, score=0, answered=false, pendingLock=null;
+let streak=0, hintUsed=false, prevBest=null, justCompleted=null;
+let currentWord='';
+
+document.getElementById('navName').textContent = ME.getStudentName()||'';
+
+// Text-to-speech
+function speakWord(word) {
+  const w = word || currentWord;
+  if (!w) return;
+  window.speechSynthesis.cancel();
+  const btn = document.getElementById('speakBtn');
+  if (btn) { btn.classList.add('speaking'); setTimeout(()=>btn.classList.remove('speaking'),800); }
+  const utter = new SpeechSynthesisUtterance(w);
+  utter.rate = 0.75; utter.pitch = 1.0; utter.volume = 1.0;
+  // Try to get a clear voice
+  const voices = window.speechSynthesis.getVoices();
+  const preferred = voices.find(v => v.lang.startsWith('en') && v.localService);
+  if (preferred) utter.voice = preferred;
+  window.speechSynthesis.speak(utter);
+}
+
+// Load voices (some browsers need a trigger)
+window.speechSynthesis.onvoiceschanged = () => window.speechSynthesis.getVoices();
+
+function starsHTML(best, total=10) {
+  if(best===null) return '';
+  const pct=best/total, filled=pct===1?3:pct>=0.8?2:pct>=0.6?1:0;
+  return '<div class="mission-stars">'+[0,1,2].map(i=>`<span class="mission-star">${i<filled?'⭐':'☆'}</span>`).join('')+'</div>';
+}
+
+function buildGrid(){
+  const grid=document.getElementById('missionsGrid'); grid.innerHTML='';
+  const sections=[
+    {from:0,to:4, label:'Missions 1–5 · CVC, Long Vowels, Blends, Doubles, Word Families'},
+    {from:5,to:9, label:'Missions 6–10 · Compound Words, Endings, Sight Words'},
+    {from:10,to:14,label:'Missions 11–15 · Animals, Nature, Food, School, Verbs'},
+    {from:15,to:19,label:'Missions 16–20 · Comparing, Contractions, Feelings, Challenges'},
+  ];
+  let totalDone=0, totalPerf=0;
+  for(const section of sections){
+    const div=document.createElement('div'); div.className='section-label';
+    div.innerHTML=`<span>${section.label}</span>`; grid.appendChild(div);
+    for(let i=section.from; i<=section.to; i++){
+      const n=i+1;
+      const locked=(n%6===0)&&!ME.isUnlocked(n,SUBJECT);
+      const best=ME.getBest(n,SUBJECT);
+      if(best!==null) totalDone++;
+      if(best===10) totalPerf++;
+      const btn=document.createElement('button');
+      btn.className='mission-btn'+(locked?' locked':'')+(best!==null?' completed':'');
+      btn.id=`missionBtn${n}`;
+      btn.innerHTML=`
+        ${best===10?'<div class="perfect-badge">Perfect!</div>':''}
+        <div class="mission-number">Mission ${n}</div>
+        <div class="mission-name">${SPELL_MISSIONS[i].name}</div>
+        ${best!==null?`<div class="mission-score${best<7?' low':''}">Best: ${best}/10</div>${starsHTML(best)}`:''}
+      `;
+      if(n===justCompleted){ btn.classList.add('just-completed'); setTimeout(()=>btn.classList.remove('just-completed'),700); }
+      btn.addEventListener('click',()=>clickMission(n,i,locked));
+      grid.appendChild(btn);
+    }
+  }
+  document.getElementById('gridSummary').innerHTML=`
+    <div class="grid-stat"><div class="grid-stat-val">${totalDone}</div><div class="grid-stat-lbl">missions done</div></div>
+    <div class="grid-stat"><div class="grid-stat-val">${totalPerf}</div><div class="grid-stat-lbl">perfect scores</div></div>
+    <div class="grid-stat"><div class="grid-stat-val">${20-totalDone}</div><div class="grid-stat-lbl">remaining</div></div>
+  `;
+}
+
+function clickMission(n,i,locked){
+  if(locked){
+    pendingLock=n; document.getElementById('lockInput').value=''; document.getElementById('lockError').textContent='';
+    document.getElementById('lockModal').classList.remove('hidden');
+    setTimeout(()=>document.getElementById('lockInput').focus(),50);
+  } else { startMission(n,i); }
+}
+
+function closeLockModal(){ document.getElementById('lockModal').classList.add('hidden'); pendingLock=null; }
+function submitLockCode(){
+  const code=document.getElementById('lockInput').value.trim().toUpperCase();
+  if(ME.unlockMission(pendingLock,SUBJECT,code)){ closeLockModal(); buildGrid(); }
+  else document.getElementById('lockError').textContent='That code is not correct. Ask your teacher!';
+}
+document.getElementById('lockInput').addEventListener('keydown',e=>{if(e.key==='Enter')submitLockCode();});
+
+function startMission(n,i){
+  currentMission=n;
+  wordList=ME.shuffle([...SPELL_MISSIONS[i].words]);
+  wIndex=0; score=0; streak=0;
+  prevBest=ME.getBest(n,SUBJECT);
+  document.getElementById('qMissionLabel').textContent=`Mission ${n} — Spelling`;
+  const bb=document.getElementById('beatBanner');
+  if(prevBest!==null){ document.getElementById('beatScore').textContent=`${prevBest}/10`; bb.classList.remove('hidden'); }
+  else bb.classList.add('hidden');
+  document.getElementById('spellingModal').classList.remove('hidden');
+  showWord();
+}
+
+function showWord(){
+  const item=wordList[wIndex]; currentWord=item.w; answered=false; hintUsed=false;
+  document.getElementById('qNumber').textContent=`Word ${wIndex+1} of ${wordList.length}`;
+  document.getElementById('qProgressFill').style.width=`${(wIndex/wordList.length)*100}%`;
+  document.getElementById('qFeedback').textContent=''; document.getElementById('qFeedback').className='q-feedback';
+  document.getElementById('hintBox').classList.add('hidden');
+  document.getElementById('hintBtn').disabled=false; document.getElementById('hintBtn').textContent='💡 Hint';
+  document.getElementById('qActionArea').innerHTML='';
+
+  // Show blanks
+  document.getElementById('wordBlanks').innerHTML=item.w.split('').map(()=>'<div class="letter-blank">_</div>').join('');
+  // Context
+  document.getElementById('spellContext').innerHTML=item.ctx.replace('___',`<strong>${'_'.repeat(item.w.length)}</strong>`);
+  // Clear input
+  const inp=document.getElementById('spellingInput'); inp.value=''; inp.className='q-input'; inp.disabled=false;
+  // Live blanks update
+  inp.oninput=()=>{
+    const letters=inp.value.toLowerCase().split('');
+    document.querySelectorAll('.letter-blank').forEach((b,i)=>{
+      b.textContent=letters[i]||'_'; b.className='letter-blank'+(letters[i]?' filled':'');
+    });
+  };
+  updateStreakBanner();
+  // Speak after short delay
+  setTimeout(()=>speakWord(item.w), 400);
+  setTimeout(()=>inp.focus(), 500);
+  inp.onkeydown=e=>{if(e.key==='Enter'&&!answered)checkSpelling();};
+}
+
+function showHint(){
+  const item=wordList[wIndex]; if(hintUsed) return;
+  hintUsed=true;
+  document.getElementById('hintBox').textContent=item.hint;
+  document.getElementById('hintBox').classList.remove('hidden');
+  document.getElementById('hintBtn').disabled=true;
+  ME.AudioFX.hint();
+}
+
+function updateStreakBanner(){
+  const el=document.getElementById('streakBanner');
+  if(streak>=3){ el.classList.add('visible'); el.textContent=`🔥 ${streak} in a row!`; }
+  else el.classList.remove('visible');
+}
+
+function checkSpelling(){
+  if(answered) return;
+  const inp=document.getElementById('spellingInput'); if(!inp) return;
+  const val=inp.value.trim().toLowerCase(), correct=currentWord.toLowerCase();
+  answered=true; inp.disabled=true;
+  const fb=document.getElementById('qFeedback');
+  // Reveal word in blanks
+  document.querySelectorAll('.letter-blank').forEach((b,i)=>{
+    b.textContent=correct[i]||''; b.className='letter-blank filled';
+  });
+  if(val===correct){
+    inp.className='q-input correct'; score++; streak++;
+    ME.AudioFX.correct();
+    fb.className='q-feedback correct'; fb.textContent='✓ Correct!';
+  } else {
+    inp.className='q-input wrong'; streak=0;
+    ME.AudioFX.wrong();
+    fb.className='q-feedback wrong'; fb.textContent=`✗ The correct spelling is: ${correct}`;
+    // Speak the correct word again
+    setTimeout(()=>speakWord(correct),600);
+  }
+  if(streak>0&&streak%3===0) setTimeout(()=>ME.AudioFX.streak(),200);
+  const isLast=wIndex+1>=wordList.length;
+  document.getElementById('qActionArea').innerHTML=`<button class="q-next-btn" onclick="${isLast?'finishMission':'nextWord'}()">${isLast?'🏁 See Results':'Next Word →'}</button>`;
+}
+
+function nextWord(){ wIndex++; showWord(); }
+function closeSpellingModal(){ document.getElementById('spellingModal').classList.add('hidden'); currentMission=null; }
+
+function spawnConfetti(){
+  const wrap=document.getElementById('confettiWrap'); wrap.innerHTML='';
+  const colors=['#fb923c','#f5a623','#4ecdc4','#56cf8a','#e84393','#f0f4ff'];
+  for(let i=0;i<60;i++){
+    const p=document.createElement('div'); p.className='confetti-piece';
+    p.style.left=Math.random()*100+'vw';
+    p.style.background=colors[Math.floor(Math.random()*colors.length)];
+    p.style.width=(6+Math.random()*8)+'px'; p.style.height=(6+Math.random()*8)+'px';
+    p.style.animationDuration=(1.5+Math.random()*1.5)+'s';
+    p.style.animationDelay=(Math.random()*0.5)+'s';
+    wrap.appendChild(p);
+  }
+  setTimeout(()=>wrap.innerHTML='',3500);
+}
+
+function finishMission(){
+  window.speechSynthesis.cancel();
+  document.getElementById('spellingModal').classList.add('hidden');
+  const oldBest=ME.getBest(currentMission,SUBJECT);
+  ME.markComplete(currentMission,SUBJECT,score);
+  justCompleted=currentMission; buildGrid();
+  const pct=Math.round((score/wordList.length)*100);
+  if(pct===100){ ME.AudioFX.perfect(); spawnConfetti(); } else ME.AudioFX.complete();
+  document.getElementById('resultEmoji').textContent=pct===100?'🏆':pct>=80?'🌟':pct>=60?'👍':'💪';
+  document.getElementById('resultTitle').textContent=pct===100?'Perfect Speller!':pct>=80?'Great Spelling!':pct>=60?'Good Work!':'Keep Practicing!';
+  document.getElementById('resultScore').textContent=`${score} / ${wordList.length}`;
+  document.getElementById('resultSubtitle').textContent=`That's ${pct}% — Mission ${currentMission} complete!`;
+  const beatMsg=document.getElementById('resultBeatMsg');
+  if(oldBest!==null&&score>oldBest) beatMsg.textContent=`🎉 New best score! (was ${oldBest}/10)`;
+  else if(oldBest!==null&&score===oldBest) beatMsg.textContent='Matched your best score!';
+  else beatMsg.textContent='';
+  document.getElementById('resultModal').classList.remove('hidden');
+}
+
+function retryMission(){
+  document.getElementById('resultModal').classList.add('hidden');
+  const i=currentMission-1; startMission(currentMission,i);
+}
+function closeResultModal(){ document.getElementById('resultModal').classList.add('hidden'); currentMission=null; }
+
+buildGrid();
+</script>
+</body>
+</html>

@@ -1,0 +1,552 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Reading Missions — Mission Academy</title>
+<link rel="stylesheet" href="styles.css">
+<style>
+  .reading-theme { --accent: #a78bfa; --accent-dim: rgba(167,139,250,0.15); --accent-border: rgba(167,139,250,0.3); }
+  .reading-accent { color: var(--accent) !important; }
+  .reading-theme .nav-tab.active-reading { background: var(--accent-dim); color: var(--accent); border-color: var(--accent); }
+  .reading-theme .mission-btn:hover:not(.locked) { border-color: var(--accent-border); }
+  .reading-theme .q-progress-fill { background: var(--accent); }
+  .reading-theme .q-mission-label { color: var(--accent); }
+
+  /* Passage card */
+  .passage-card {
+    background: rgba(167,139,250,0.06);
+    border: 1px solid rgba(167,139,250,0.2);
+    border-radius: 14px;
+    padding: 18px 20px;
+    margin-bottom: 20px;
+    font-size: 1rem;
+    line-height: 1.75;
+    color: var(--white);
+  }
+  .passage-title {
+    font-family: 'Space Grotesk', sans-serif;
+    font-weight: 700;
+    font-size: 0.85rem;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    color: var(--accent, #a78bfa);
+    margin-bottom: 10px;
+  }
+  .passage-text { font-size: 1.05rem; line-height: 1.8; }
+
+  /* Question counter inside passage modal */
+  .passage-q-label {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--dim);
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    margin-bottom: 8px;
+  }
+</style>
+</head>
+<body class="reading-theme">
+
+<nav class="top-nav">
+  <a href="index.html" class="nav-logo">🚀 Mission <span>Academy</span></a>
+  <div style="display:flex;align-items:center;gap:12px;">
+    <span class="nav-student-name" id="navName"></span>
+    <div class="nav-tabs">
+      <a href="math.html"    class="nav-tab">➕ Math</a>
+      <a href="ela.html"     class="nav-tab">📖 ELA</a>
+      <a href="reading.html" class="nav-tab active-reading">📚 Reading</a>
+      <a href="spelling.html" class="nav-tab">🔤 Spelling</a>
+      <a href="trophies.html" class="nav-tab">🏆</a>
+    </div>
+  </div>
+</nav>
+
+<div class="page-header">
+  <div class="page-eyebrow reading-accent">2nd Grade · 20 Passages</div>
+  <h1 class="page-title">Reading Missions</h1>
+  <p class="page-subtitle">Read each story, then answer the questions. You've got this!</p>
+</div>
+
+<div class="grid-summary" id="gridSummary"></div>
+<div class="missions-grid" id="missionsGrid"></div>
+<div class="confetti-wrap" id="confettiWrap"></div>
+
+<!-- LOCK MODAL -->
+<div class="modal-overlay hidden" id="lockModal">
+  <div class="modal-box">
+    <button class="q-close-btn" onclick="closeLockModal()">✕</button>
+    <div class="lock-icon">🔒</div>
+    <h2 class="lock-title">Checkpoint Mission</h2>
+    <p class="lock-desc">Ask your teacher for the unlock code to continue!</p>
+    <input class="lock-input" id="lockInput" type="password" placeholder="Enter code" maxlength="12">
+    <div class="lock-error" id="lockError"></div>
+    <button class="lock-submit" onclick="submitLockCode()">Unlock Mission</button>
+    <button class="lock-cancel" onclick="closeLockModal()">Go back</button>
+  </div>
+</div>
+
+<!-- READING MODAL — passage + questions together -->
+<div class="modal-overlay hidden" id="readingModal">
+  <div class="modal-box" style="max-width:640px;">
+    <button class="q-close-btn" onclick="closeReadingModal()">✕</button>
+    <div class="q-header">
+      <div>
+        <div class="q-mission-label reading-accent" id="qMissionLabel"></div>
+        <div class="q-number" id="qNumber"></div>
+      </div>
+      <div class="q-progress-bar"><div class="q-progress-fill" id="qProgressFill" style="width:0%"></div></div>
+    </div>
+    <div class="beat-banner hidden" id="beatBanner">
+      <span>🎯</span>
+      <span>Your best: <span class="beat-score" id="beatScore"></span> — try to beat it!</span>
+    </div>
+    <div class="streak-banner" id="streakBanner"></div>
+
+    <!-- Passage shown on every question -->
+    <div class="passage-card" id="passageCard">
+      <div class="passage-title" id="passageTitle"></div>
+      <div class="passage-text" id="passageText"></div>
+    </div>
+
+    <div class="passage-q-label" id="qLabel"></div>
+    <div class="q-text" id="qText"></div>
+    <div id="qAnswerArea"></div>
+    <div class="hint-row">
+      <button class="hint-btn" id="hintBtn" onclick="showHint()" style="--mint:#a78bfa;border-color:rgba(167,139,250,0.3);color:#a78bfa;">💡 Hint</button>
+    </div>
+    <div class="hint-box hidden" id="hintBox" style="border-color:rgba(167,139,250,0.2);color:#a78bfa;background:rgba(167,139,250,0.06);"></div>
+    <div class="q-feedback" id="qFeedback"></div>
+    <div id="qActionArea"></div>
+  </div>
+</div>
+
+<!-- RESULT MODAL -->
+<div class="modal-overlay hidden" id="resultModal">
+  <div class="modal-box">
+    <div class="result-emoji" id="resultEmoji"></div>
+    <div class="result-title" id="resultTitle"></div>
+    <div class="result-score" id="resultScore"></div>
+    <div class="result-subtitle" id="resultSubtitle"></div>
+    <div id="resultBeatMsg" style="text-align:center;color:var(--success);font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:0.95rem;margin-bottom:16px;"></div>
+    <div class="result-btns">
+      <button class="result-btn primary" onclick="retryMission()">Try Again</button>
+      <button class="result-btn secondary" onclick="closeResultModal()">Mission List</button>
+    </div>
+  </div>
+</div>
+
+<script src="engine.js"></script>
+<script>
+// ─── Reading Passages ───────────────────────────────────────────────────────
+const PASSAGES = [
+  {
+    title: "The Little Seed",
+    text: "A little seed fell into the soft dirt. Rain fell on it every day. The sun shone bright and warm. Soon a tiny green shoot pushed up through the soil. It grew taller and taller. One morning, a big yellow flower opened up. A bee landed on it and buzzed happily.",
+    questions: [
+      { q: "What did the seed need to grow?", answer: "rain and sun", type: "choice", choices: ["rain and sun", "snow and wind", "rocks and sand", "cold and dark"], hint: "Look at what the passage says fell on the seed and shone on it." },
+      { q: "What color was the flower that grew?", answer: "yellow", type: "choice", choices: ["red", "blue", "yellow", "purple"], hint: "The last sentences describe the flower." },
+      { q: "Where did the seed fall?", answer: "soft dirt", type: "choice", choices: ["a pond", "soft dirt", "a rock", "a tree"], hint: "The very first sentence tells you this." },
+      { q: "What landed on the flower at the end?", answer: "a bee", type: "choice", choices: ["a bird", "a butterfly", "a bee", "a worm"], hint: "Read the last sentence." },
+      { q: "What pushed up through the soil first?", answer: "a tiny green shoot", type: "choice", choices: ["a flower", "a branch", "a tiny green shoot", "a root"], hint: "Look for what came before the flower grew tall." },
+    ]
+  },
+  {
+    title: "Max's Big Day",
+    text: "Max the dog woke up early on Saturday. He ran to the door and wagged his tail. His owner, Ana, put on her shoes and smiled. They walked to the park together. Max chased a squirrel but the squirrel ran up a tree. Then Max splashed in a puddle. Ana laughed and gave him a big hug.",
+    questions: [
+      { q: "What day did the story take place?", answer: "Saturday", type: "choice", choices: ["Monday", "Friday", "Saturday", "Sunday"], hint: "The first sentence tells you the day." },
+      { q: "Who is Max's owner?", answer: "Ana", type: "choice", choices: ["Sam", "Ana", "Maria", "Jake"], hint: "Look for the owner's name in the story." },
+      { q: "Where did Ana and Max go?", answer: "the park", type: "choice", choices: ["the beach", "the store", "the park", "school"], hint: "They walked somewhere together." },
+      { q: "What did Max chase?", answer: "a squirrel", type: "choice", choices: ["a ball", "a cat", "a squirrel", "a bird"], hint: "Max chased an animal up a tree." },
+      { q: "How did Ana feel at the end?", answer: "happy", type: "choice", choices: ["sad", "angry", "scared", "happy"], hint: "Ana laughed and gave Max a hug — how does that sound?" },
+    ]
+  },
+  {
+    title: "The Rainy Day",
+    text: "It was raining outside. Lily looked out the window and sighed. She could not play outside. Her dad brought out some paper and crayons. Lily started drawing a rainbow. She drew red, orange, yellow, green, blue, and purple. When she was done, the rain had stopped. She taped her rainbow to the window.",
+    questions: [
+      { q: "Why couldn't Lily play outside?", answer: "it was raining", type: "choice", choices: ["it was too hot", "it was raining", "it was dark", "she was sick"], hint: "The first sentence tells you the weather." },
+      { q: "What did Lily's dad bring her?", answer: "paper and crayons", type: "choice", choices: ["books", "toys", "paper and crayons", "snacks"], hint: "Dad brought supplies to do an activity." },
+      { q: "What did Lily draw?", answer: "a rainbow", type: "choice", choices: ["a sun", "a house", "a rainbow", "flowers"], hint: "Look at what colors she used for a clue." },
+      { q: "How many colors did Lily draw?", answer: "six", type: "choice", choices: ["four", "five", "six", "seven"], hint: "Count the colors listed in the story." },
+      { q: "Where did Lily put her drawing?", answer: "on the window", type: "choice", choices: ["on the fridge", "in a box", "on the window", "on the wall"], hint: "The last sentence tells you." },
+    ]
+  },
+  {
+    title: "The New Kid",
+    text: "Omar was the new kid at school. He felt nervous on his first day. He did not know anyone. At lunch, a girl named Priya sat next to him. She smiled and said, 'Hi! I like your backpack.' Omar smiled back. They talked about their favorite books. By the end of the day, Omar had made a new friend.",
+    questions: [
+      { q: "How did Omar feel on his first day?", answer: "nervous", type: "choice", choices: ["excited", "angry", "nervous", "bored"], hint: "The second sentence describes his feeling." },
+      { q: "Who sat next to Omar at lunch?", answer: "Priya", type: "choice", choices: ["a boy named Sam", "his teacher", "Priya", "his sister"], hint: "Look for who joined him at the lunch table." },
+      { q: "What did Priya say she liked?", answer: "his backpack", type: "choice", choices: ["his shoes", "his backpack", "his hair", "his lunch"], hint: "Priya gave Omar a compliment." },
+      { q: "What did they talk about?", answer: "their favorite books", type: "choice", choices: ["sports", "their favorite books", "movies", "food"], hint: "What did Omar and Priya have in common?" },
+      { q: "How did the day end for Omar?", answer: "he made a new friend", type: "choice", choices: ["he went home early", "he got lost", "he made a new friend", "he forgot his lunch"], hint: "The last sentence sums it up." },
+    ]
+  },
+  {
+    title: "Butterflies",
+    text: "A butterfly begins its life as a tiny egg on a leaf. When the egg hatches, a caterpillar comes out. The caterpillar eats and eats until it is big. Then it wraps itself in a cocoon. Inside the cocoon, something amazing happens. After a few weeks, a beautiful butterfly comes out. It spreads its wings and flies away.",
+    questions: [
+      { q: "Where does a butterfly begin its life?", answer: "as an egg on a leaf", type: "choice", choices: ["in a pond", "in the sky", "as an egg on a leaf", "in the dirt"], hint: "The very first sentence tells you." },
+      { q: "What comes out when the egg hatches?", answer: "a caterpillar", type: "choice", choices: ["a butterfly", "a caterpillar", "a worm", "a bee"], hint: "Something comes out of the egg before the butterfly." },
+      { q: "What does the caterpillar do before it makes a cocoon?", answer: "eats and eats", type: "choice", choices: ["sleeps", "flies", "eats and eats", "lays eggs"], hint: "The caterpillar needs to get big first." },
+      { q: "What is a cocoon?", answer: "a wrapping the caterpillar makes around itself", type: "choice", choices: ["a type of egg", "a leaf", "a type of nest", "a wrapping the caterpillar makes around itself"], hint: "The story says the caterpillar wraps itself in it." },
+      { q: "What does the butterfly do at the very end?", answer: "spreads its wings and flies away", type: "choice", choices: ["lays an egg", "makes a cocoon", "spreads its wings and flies away", "eats a leaf"], hint: "The last two sentences describe this." },
+    ]
+  },
+  {
+    title: "The Bake Sale",
+    text: "The second grade class had a bake sale to raise money for new books. Students brought cookies, muffins, and brownies. They set up a table outside the library. Lots of parents and teachers stopped to buy treats. By noon, almost everything was sold. The class raised fifty dollars. Their teacher, Ms. Flores, was very proud of them.",
+    questions: [
+      { q: "Why did the class have a bake sale?", answer: "to raise money for new books", type: "choice", choices: ["to celebrate a birthday", "to raise money for new books", "to raise money for a trip", "just for fun"], hint: "The first sentence explains the reason." },
+      { q: "Where was the table set up?", answer: "outside the library", type: "choice", choices: ["in the gym", "in the classroom", "outside the library", "in the cafeteria"], hint: "Look for where they placed their bake sale." },
+      { q: "Who bought things at the bake sale?", answer: "parents and teachers", type: "choice", choices: ["only students", "parents and teachers", "only teachers", "other schools"], hint: "The story says who stopped to buy treats." },
+      { q: "How much money did the class raise?", answer: "fifty dollars", type: "choice", choices: ["ten dollars", "twenty dollars", "one hundred dollars", "fifty dollars"], hint: "Look for the amount near the end." },
+      { q: "How did Ms. Flores feel about the class?", answer: "proud", type: "choice", choices: ["angry", "worried", "proud", "surprised"], hint: "The last sentence tells you her feeling." },
+    ]
+  },
+  {
+    title: "Penguins",
+    text: "Penguins are birds, but they cannot fly. Instead, they are very good swimmers. They use their wings like flippers to move through the water. Penguins live in cold places, like Antarctica. They eat fish and squid. Baby penguins are called chicks. A mother and father penguin take turns keeping their egg warm.",
+    questions: [
+      { q: "Why are penguins unusual birds?", answer: "they cannot fly", type: "choice", choices: ["they are too big", "they cannot fly", "they do not have wings", "they live alone"], hint: "The first two sentences explain what makes them unusual." },
+      { q: "How do penguins use their wings?", answer: "like flippers to swim", type: "choice", choices: ["to fly", "to keep warm", "like flippers to swim", "to build nests"], hint: "Think about what penguins are good at." },
+      { q: "Where do penguins live?", answer: "cold places like Antarctica", type: "choice", choices: ["hot deserts", "tropical forests", "cold places like Antarctica", "lakes and rivers"], hint: "The passage names the place where penguins live." },
+      { q: "What do penguins eat?", answer: "fish and squid", type: "choice", choices: ["berries and plants", "fish and squid", "bugs and worms", "seaweed"], hint: "Look for what penguins eat in the passage." },
+      { q: "What are baby penguins called?", answer: "chicks", type: "choice", choices: ["pups", "kittens", "chicks", "hatchlings"], hint: "The passage gives them a specific name." },
+    ]
+  },
+  {
+    title: "Lost and Found",
+    text: "Mia lost her favorite red hat at the playground. She looked everywhere but could not find it. She felt very sad on the way home. The next morning, she went back to the playground. A kind boy named Leo was there. He held up her red hat and said, 'Is this yours?' Mia's face lit up with a big smile.",
+    questions: [
+      { q: "What did Mia lose?", answer: "her red hat", type: "choice", choices: ["her red scarf", "her blue hat", "her red hat", "her backpack"], hint: "The very first sentence tells you." },
+      { q: "Where did Mia lose it?", answer: "the playground", type: "choice", choices: ["school", "the store", "the park", "the playground"], hint: "The first sentence says where she lost it." },
+      { q: "How did Mia feel on the way home?", answer: "sad", type: "choice", choices: ["happy", "angry", "sad", "excited"], hint: "The third sentence describes her feeling." },
+      { q: "When did Mia go back to look?", answer: "the next morning", type: "choice", choices: ["that afternoon", "the next day after school", "the next morning", "a week later"], hint: "Look for when she returned." },
+      { q: "Who found Mia's hat?", answer: "a boy named Leo", type: "choice", choices: ["her teacher", "her mom", "a girl named Ana", "a boy named Leo"], hint: "Someone kind was at the playground." },
+    ]
+  },
+  {
+    title: "Community Helpers",
+    text: "Community helpers are people who help keep us safe and healthy. Firefighters put out fires and rescue people. Police officers protect our neighborhoods. Doctors and nurses help sick people feel better. Teachers help children learn new things every day. Mail carriers bring letters and packages to our homes. We should thank community helpers for all they do.",
+    questions: [
+      { q: "What do firefighters do?", answer: "put out fires and rescue people", type: "choice", choices: ["teach children", "put out fires and rescue people", "deliver mail", "protect neighborhoods"], hint: "The second sentence tells you." },
+      { q: "Who helps sick people feel better?", answer: "doctors and nurses", type: "choice", choices: ["police officers", "mail carriers", "doctors and nurses", "firefighters"], hint: "Look for who takes care of sick people." },
+      { q: "What do mail carriers bring?", answer: "letters and packages", type: "choice", choices: ["food and water", "medicine", "letters and packages", "books"], hint: "Think about what you find in your mailbox." },
+      { q: "What do teachers help children do?", answer: "learn new things", type: "choice", choices: ["stay safe", "learn new things", "get exercise", "eat healthy food"], hint: "The passage says teachers help children every day." },
+      { q: "What does the passage say we should do for community helpers?", answer: "thank them", type: "choice", choices: ["pay them more", "thank them", "follow their rules", "help them work"], hint: "Read the very last sentence." },
+    ]
+  },
+  {
+    title: "The Missing Cupcake",
+    text: "Jake baked six chocolate cupcakes for his class party. He put them on the counter and went to get dressed. When he came back, only five cupcakes were there. He looked at his dog, Biscuit. Biscuit had frosting on his nose. Jake tried not to laugh. He baked one more cupcake so his class would have enough.",
+    questions: [
+      { q: "How many cupcakes did Jake bake at first?", answer: "six", type: "choice", choices: ["four", "five", "six", "seven"], hint: "The first sentence tells you the number." },
+      { q: "Where did Jake put the cupcakes?", answer: "on the counter", type: "choice", choices: ["in the fridge", "on the table", "on the counter", "in a box"], hint: "He left them somewhere while he got dressed." },
+      { q: "How many cupcakes were left when Jake came back?", answer: "five", type: "choice", choices: ["six", "five", "four", "three"], hint: "One cupcake went missing." },
+      { q: "How did Jake know Biscuit ate the cupcake?", answer: "Biscuit had frosting on his nose", type: "choice", choices: ["Biscuit looked guilty", "Biscuit had frosting on his nose", "Biscuit was hiding", "Biscuit was asleep"], hint: "Jake looked at his dog and noticed something." },
+      { q: "What did Jake do to solve the problem?", answer: "baked one more cupcake", type: "choice", choices: ["went to the store", "skipped the party", "baked one more cupcake", "asked a neighbor"], hint: "The last sentence explains his solution." },
+    ]
+  },
+  {
+    title: "Seasons",
+    text: "There are four seasons in a year: spring, summer, fall, and winter. In spring, flowers bloom and birds return from warm places. Summer is hot and sunny — perfect for swimming. In fall, leaves turn red, orange, and yellow and drop from trees. Winter brings cold air and sometimes snow. Each season is special in its own way.",
+    questions: [
+      { q: "How many seasons are there in a year?", answer: "four", type: "choice", choices: ["two", "three", "four", "six"], hint: "The first sentence lists them all." },
+      { q: "What happens in spring?", answer: "flowers bloom and birds return", type: "choice", choices: ["leaves fall from trees", "snow falls", "flowers bloom and birds return", "it gets very hot"], hint: "The passage describes each season separately." },
+      { q: "What season is perfect for swimming?", answer: "summer", type: "choice", choices: ["spring", "summer", "fall", "winter"], hint: "Which season is hot and sunny?" },
+      { q: "What happens to leaves in fall?", answer: "they turn colors and drop from trees", type: "choice", choices: ["they grow bigger", "they turn green", "they turn colors and drop from trees", "they stay the same"], hint: "Look at the fall description in the passage." },
+      { q: "What does winter sometimes bring?", answer: "snow", type: "choice", choices: ["rain", "snow", "fog", "storms"], hint: "The winter sentence mentions two things." },
+    ]
+  },
+  {
+    title: "The Garden",
+    text: "Rosa and her grandfather planted a vegetable garden in the backyard. They put seeds in the ground for tomatoes, carrots, and beans. Rosa watered the plants every morning. Her grandfather pulled out the weeds. After two months, the vegetables were ready to pick. Rosa picked a big red tomato. 'This is the best tomato I have ever tasted!' she said.",
+    questions: [
+      { q: "Who planted the garden?", answer: "Rosa and her grandfather", type: "choice", choices: ["Rosa and her mom", "Rosa alone", "Rosa and her grandfather", "Rosa's whole family"], hint: "The first sentence names both people." },
+      { q: "What vegetables did they plant?", answer: "tomatoes, carrots, and beans", type: "choice", choices: ["corn, peas, and peppers", "tomatoes, carrots, and beans", "cucumbers and squash", "lettuce and onions"], hint: "The passage lists all three." },
+      { q: "What was Rosa's job in the garden?", answer: "watering the plants", type: "choice", choices: ["pulling weeds", "picking vegetables", "watering the plants", "planting seeds"], hint: "Look for what Rosa did every morning." },
+      { q: "How long did it take for the vegetables to grow?", answer: "two months", type: "choice", choices: ["one week", "one month", "two months", "one year"], hint: "Look for the time mentioned in the passage." },
+      { q: "What did Rosa pick at the end?", answer: "a big red tomato", type: "choice", choices: ["a carrot", "some beans", "a big red tomato", "all the vegetables"], hint: "The last sentences describe what she picked." },
+    ]
+  },
+  {
+    title: "Ocean Animals",
+    text: "The ocean is home to many amazing animals. Dolphins are very smart and swim in groups called pods. Octopuses have eight arms and can change color to hide. Sharks are powerful fish with sharp teeth. Sea turtles swim long distances and come to beaches to lay their eggs. Clownfish live in sea anemones, which protect them from danger. The ocean is a busy, wonderful place!",
+    questions: [
+      { q: "What are groups of dolphins called?", answer: "pods", type: "choice", choices: ["schools", "herds", "pods", "flocks"], hint: "The passage gives this group a specific name." },
+      { q: "How many arms does an octopus have?", answer: "eight", type: "choice", choices: ["six", "eight", "ten", "four"], hint: "Count what the passage says." },
+      { q: "Why do octopuses change color?", answer: "to hide", type: "choice", choices: ["to scare other animals", "to hide", "to attract food", "to find a mate"], hint: "The passage explains the reason." },
+      { q: "Where do sea turtles lay their eggs?", answer: "on beaches", type: "choice", choices: ["in the deep ocean", "on coral reefs", "on beaches", "near rocks"], hint: "Sea turtles travel to a special place." },
+      { q: "What protects clownfish from danger?", answer: "sea anemones", type: "choice", choices: ["their bright color", "sharks", "sea anemones", "their speed"], hint: "Clownfish live somewhere that keeps them safe." },
+    ]
+  },
+  {
+    title: "A Kind Act",
+    text: "One cold morning, Sophie saw an old man trying to carry a heavy bag of groceries. He kept stopping to rest. Sophie ran over and asked, 'Can I help you carry that?' The man smiled and said, 'That would be wonderful.' Together they walked to his house on Elm Street. The man thanked Sophie and gave her a warm cookie from the bag.",
+    questions: [
+      { q: "What was the old man carrying?", answer: "a heavy bag of groceries", type: "choice", choices: ["a suitcase", "a box of books", "a heavy bag of groceries", "a basket of flowers"], hint: "The first sentences tell you what he had." },
+      { q: "Why did the man keep stopping?", answer: "to rest", type: "choice", choices: ["to look around", "to rest", "to check his phone", "to say hello to neighbors"], hint: "The bag was very heavy." },
+      { q: "What did Sophie ask the man?", answer: "if she could help carry the bag", type: "choice", choices: ["where he lived", "if she could help carry the bag", "what was in the bag", "if he needed a doctor"], hint: "Sophie wanted to do a kind thing." },
+      { q: "Where did they walk to?", answer: "the man's house on Elm Street", type: "choice", choices: ["the grocery store", "Sophie's house", "the man's house on Elm Street", "the park"], hint: "They walked to his home." },
+      { q: "How did the man thank Sophie?", answer: "gave her a warm cookie", type: "choice", choices: ["gave her money", "gave her a warm cookie", "gave her flowers", "waved goodbye"], hint: "He gave her something from the bag." },
+    ]
+  },
+  {
+    title: "The Big Storm",
+    text: "Dark clouds rolled in on Tuesday afternoon. The wind began to blow hard. Mom told the children to come inside. She closed all the windows. Lightning flashed and thunder boomed. The power went out for an hour. The family sat together by candlelight and told stories. When the storm passed, a big rainbow appeared in the sky.",
+    questions: [
+      { q: "When did the storm come?", answer: "Tuesday afternoon", type: "choice", choices: ["Monday morning", "Wednesday evening", "Tuesday afternoon", "Friday night"], hint: "The first sentence gives the day and time." },
+      { q: "What did Mom do to prepare for the storm?", answer: "closed all the windows", type: "choice", choices: ["bought candles", "closed all the windows", "called a neighbor", "turned on the TV"], hint: "Mom told the kids to come inside and then did something." },
+      { q: "What happened to the power?", answer: "it went out for an hour", type: "choice", choices: ["it stayed on", "it went out for an hour", "it flickered but stayed on", "it went out all night"], hint: "Look for what happened after the lightning and thunder." },
+      { q: "What did the family do during the storm?", answer: "sat together and told stories", type: "choice", choices: ["watched movies", "played board games", "sat together and told stories", "went to a neighbor's house"], hint: "They used candlelight and spent time together." },
+      { q: "What appeared when the storm passed?", answer: "a rainbow", type: "choice", choices: ["sunshine", "a rainbow", "more clouds", "birds"], hint: "The very last sentence tells you." },
+    ]
+  },
+  {
+    title: "Library Day",
+    text: "Every Friday, Mrs. Kim's class walked to the school library. Students could pick two books to take home. Some kids liked funny books. Others loved books about animals or space. The librarian, Mr. Torres, always read one book out loud to the class. He used different voices for each character. Everyone looked forward to library day.",
+    questions: [
+      { q: "When did the class go to the library?", answer: "every Friday", type: "choice", choices: ["every Monday", "every Wednesday", "every Friday", "every other week"], hint: "The first sentence tells you the day." },
+      { q: "How many books could students take home?", answer: "two", type: "choice", choices: ["one", "two", "three", "as many as they wanted"], hint: "The passage gives a specific number." },
+      { q: "What was the librarian's name?", answer: "Mr. Torres", type: "choice", choices: ["Mr. Smith", "Mrs. Kim", "Mr. Torres", "Ms. Flores"], hint: "Look for the librarian's name in the passage." },
+      { q: "What did Mr. Torres do for the class?", answer: "read a book out loud", type: "choice", choices: ["helped them find books", "read a book out loud", "taught them to read", "showed them a movie"], hint: "He did something special for everyone." },
+      { q: "How did Mr. Torres make the read-aloud fun?", answer: "he used different voices for each character", type: "choice", choices: ["he showed pictures", "he let kids act it out", "he used different voices for each character", "he gave prizes for listening"], hint: "Look at what he did while reading." },
+    ]
+  },
+  {
+    title: "Stars and Planets",
+    text: "Our solar system has eight planets. Earth is the planet we live on. It is the third planet from the sun. Mars is called the Red Planet because it looks red in the sky. Jupiter is the biggest planet — it is so large that over 1,000 Earths could fit inside it. Stars are giant balls of hot gas that make their own light. Our sun is actually a star!",
+    questions: [
+      { q: "How many planets are in our solar system?", answer: "eight", type: "choice", choices: ["six", "seven", "eight", "nine"], hint: "The first sentence tells you the number." },
+      { q: "Which planet do we live on?", answer: "Earth", type: "choice", choices: ["Mars", "Jupiter", "Venus", "Earth"], hint: "This one should be easy!" },
+      { q: "Why is Mars called the Red Planet?", answer: "because it looks red in the sky", type: "choice", choices: ["because it is hot", "because it has red rocks", "because it looks red in the sky", "because it is close to the sun"], hint: "The passage explains the reason for the nickname." },
+      { q: "What makes Jupiter special?", answer: "it is the biggest planet", type: "choice", choices: ["it is closest to the sun", "it has rings", "it is the biggest planet", "it has the most moons"], hint: "Look for a fact about Jupiter's size." },
+      { q: "What is our sun?", answer: "a star", type: "choice", choices: ["a planet", "a moon", "a star", "a comet"], hint: "The very last sentence tells you." },
+    ]
+  },
+  {
+    title: "The Talent Show",
+    text: "The school was holding a talent show. Zoe wanted to sing, but she felt nervous. Her big brother told her, 'Just think about the song, not the crowd.' On the day of the show, Zoe walked on stage. Her legs felt shaky. She took a deep breath and began to sing. Her voice rang out clear and strong. When she finished, everyone clapped loudly.",
+    questions: [
+      { q: "What did Zoe want to do in the talent show?", answer: "sing", type: "choice", choices: ["dance", "play piano", "sing", "do magic tricks"], hint: "The second sentence tells you." },
+      { q: "How did Zoe feel before performing?", answer: "nervous", type: "choice", choices: ["excited", "nervous", "angry", "bored"], hint: "Look for the word that describes her feeling." },
+      { q: "What advice did her brother give her?", answer: "think about the song, not the crowd", type: "choice", choices: ["practice more", "think about the song, not the crowd", "look at a friendly face", "take deep breaths"], hint: "Her brother gave her one piece of advice." },
+      { q: "What happened right before Zoe started singing?", answer: "she took a deep breath", type: "choice", choices: ["she waved to the crowd", "she looked at her brother", "she took a deep breath", "she forgot the words"], hint: "She did something to calm down right before she began." },
+      { q: "How did the audience react?", answer: "they clapped loudly", type: "choice", choices: ["they were quiet", "they laughed", "they clapped loudly", "they booed"], hint: "The last sentence describes the audience's reaction." },
+    ]
+  },
+  {
+    title: "Recycling",
+    text: "Recycling means turning old things into new things. When we recycle paper, it can become new paper. Glass bottles can be melted and made into new bottles. Plastic containers can be turned into new products. Recycling helps the Earth because it means we use less energy and make less trash. Everyone can help by putting the right items in the recycling bin.",
+    questions: [
+      { q: "What does recycling mean?", answer: "turning old things into new things", type: "choice", choices: ["throwing things away", "buying new things", "turning old things into new things", "fixing broken things"], hint: "The first sentence defines recycling." },
+      { q: "What can recycled paper become?", answer: "new paper", type: "choice", choices: ["cardboard boxes", "new paper", "glass", "plastic"], hint: "The passage gives a specific example for paper." },
+      { q: "How does recycling help the Earth?", answer: "we use less energy and make less trash", type: "choice", choices: ["it makes things cheaper", "it creates more jobs", "we use less energy and make less trash", "it makes water cleaner"], hint: "Look for the sentence explaining why recycling helps." },
+      { q: "What can glass bottles be turned into?", answer: "new bottles", type: "choice", choices: ["paper", "plastic", "new bottles", "metal cans"], hint: "The passage gives a specific example for glass." },
+      { q: "How can everyone help?", answer: "put the right items in the recycling bin", type: "choice", choices: ["buy fewer things", "use less water", "put the right items in the recycling bin", "plant trees"], hint: "The last sentence tells you one simple action." },
+    ]
+  },
+  {
+    title: "The Sleepover",
+    text: "Bella was having her first sleepover at her friend Jade's house. They ate pizza for dinner and watched a movie. Jade's cat, Pepper, curled up on Bella's feet. When it was time for bed, Bella felt a little homesick. Jade noticed and said, 'Want to call your mom?' Bella called home and felt much better. Soon both girls were fast asleep.",
+    questions: [
+      { q: "Where did the sleepover take place?", answer: "Jade's house", type: "choice", choices: ["Bella's house", "Jade's house", "a hotel", "school"], hint: "The first sentence tells you." },
+      { q: "What did the girls eat for dinner?", answer: "pizza", type: "choice", choices: ["tacos", "pasta", "pizza", "sandwiches"], hint: "Look for what they ate." },
+      { q: "What was Jade's cat's name?", answer: "Pepper", type: "choice", choices: ["Biscuit", "Fluffy", "Pepper", "Shadow"], hint: "The cat has a spice-related name." },
+      { q: "How did Bella feel at bedtime?", answer: "homesick", type: "choice", choices: ["excited", "scared", "homesick", "angry"], hint: "The fourth sentence describes her feeling." },
+      { q: "What helped Bella feel better?", answer: "calling her mom", type: "choice", choices: ["eating a snack", "watching TV", "calling her mom", "sleeping with Pepper"], hint: "Jade suggested something that helped." },
+    ]
+  },
+];
+
+const SUBJECT = 'reading';
+const ME = window.MissionEngine;
+let currentMission=null, questions=[], qIndex=0, score=0, answered=false, pendingLock=null;
+let streak=0, hintUsed=false, prevBest=null, justCompleted=null;
+let currentPassage=null;
+
+document.getElementById('navName').textContent = ME.getStudentName()||'';
+
+const missionInfo = PASSAGES.map(p => p.title);
+
+function starsHTML(best, total=5) {
+  if(best===null) return '';
+  const pct=best/total, filled=pct===1?3:pct>=0.8?2:pct>=0.6?1:0;
+  return '<div class="mission-stars">'+[0,1,2].map(i=>`<span class="mission-star">${i<filled?'⭐':'☆'}</span>`).join('')+'</div>';
+}
+
+function buildGrid() {
+  const grid=document.getElementById('missionsGrid'); grid.innerHTML='';
+  const sections=[
+    {from:0,to:4,label:'Passages 1–5 · Stories & Narratives'},
+    {from:5,to:9,label:'Passages 6–10 · More Stories'},
+    {from:10,to:14,label:'Passages 11–15 · Informational Texts'},
+    {from:15,to:19,label:'Passages 16–20 · More Informational Texts'},
+  ];
+  let totalDone=0, totalPerf=0;
+  for(const section of sections){
+    const div=document.createElement('div'); div.className='section-label';
+    div.innerHTML=`<span>${section.label}</span>`; grid.appendChild(div);
+    for(let i=section.from; i<=section.to; i++){
+      const n=i+1;
+      const locked=(n%6===0)&&!ME.isUnlocked(n,SUBJECT);
+      const best=ME.getBest(n,SUBJECT);
+      if(best!==null) totalDone++;
+      if(best===5) totalPerf++;
+      const btn=document.createElement('button');
+      btn.className='mission-btn'+(locked?' locked':'')+(best!==null?' completed':'');
+      btn.id=`missionBtn${n}`;
+      btn.innerHTML=`
+        ${best===5?'<div class="perfect-badge">Perfect!</div>':''}
+        <div class="mission-number">Passage ${n}</div>
+        <div class="mission-name">${PASSAGES[i].title}</div>
+        ${best!==null?`<div class="mission-score${best<4?' low':''}">Best: ${best}/5</div>${starsHTML(best)}`:''}
+      `;
+      if(n===justCompleted){ btn.classList.add('just-completed'); setTimeout(()=>btn.classList.remove('just-completed'),700); }
+      btn.addEventListener('click',()=>clickMission(n,i,locked));
+      grid.appendChild(btn);
+    }
+  }
+  document.getElementById('gridSummary').innerHTML=`
+    <div class="grid-stat"><div class="grid-stat-val">${totalDone}</div><div class="grid-stat-lbl">passages done</div></div>
+    <div class="grid-stat"><div class="grid-stat-val">${totalPerf}</div><div class="grid-stat-lbl">perfect scores</div></div>
+    <div class="grid-stat"><div class="grid-stat-val">${20-totalDone}</div><div class="grid-stat-lbl">remaining</div></div>
+  `;
+}
+
+function clickMission(n,i,locked){
+  if(locked){
+    pendingLock=n;
+    document.getElementById('lockInput').value=''; document.getElementById('lockError').textContent='';
+    document.getElementById('lockModal').classList.remove('hidden');
+    setTimeout(()=>document.getElementById('lockInput').focus(),50);
+  } else { startMission(n,i); }
+}
+
+function closeLockModal(){ document.getElementById('lockModal').classList.add('hidden'); pendingLock=null; }
+function submitLockCode(){
+  const code=document.getElementById('lockInput').value.trim().toUpperCase();
+  if(ME.unlockMission(pendingLock,SUBJECT,code)){ closeLockModal(); buildGrid(); }
+  else document.getElementById('lockError').textContent='That code is not correct. Ask your teacher!';
+}
+document.getElementById('lockInput').addEventListener('keydown',e=>{if(e.key==='Enter')submitLockCode();});
+
+function startMission(n,i){
+  currentMission=n; currentPassage=PASSAGES[i];
+  questions=ME.shuffle([...currentPassage.questions]);
+  qIndex=0; score=0; streak=0;
+  prevBest=ME.getBest(n,SUBJECT);
+  document.getElementById('qMissionLabel').textContent=`Passage ${n} — Reading`;
+  document.getElementById('passageTitle').textContent=currentPassage.title;
+  document.getElementById('passageText').textContent=currentPassage.text;
+  const bb=document.getElementById('beatBanner');
+  if(prevBest!==null){ document.getElementById('beatScore').textContent=`${prevBest}/5`; bb.classList.remove('hidden'); }
+  else bb.classList.add('hidden');
+  document.getElementById('readingModal').classList.remove('hidden');
+  showQuestion();
+}
+
+function showQuestion(){
+  const q=questions[qIndex]; answered=false; hintUsed=false;
+  document.getElementById('qNumber').textContent=`Question ${qIndex+1} of ${questions.length}`;
+  document.getElementById('qProgressFill').style.width=`${(qIndex/questions.length)*100}%`;
+  document.getElementById('qLabel').textContent=`Question ${qIndex+1}`;
+  document.getElementById('qText').textContent=q.q;
+  document.getElementById('qFeedback').textContent=''; document.getElementById('qFeedback').className='q-feedback';
+  document.getElementById('hintBox').classList.add('hidden');
+  const hintBtn=document.getElementById('hintBtn'); hintBtn.disabled=!q.hint; hintBtn.textContent='💡 Hint';
+  updateStreakBanner();
+  const ansArea=document.getElementById('qAnswerArea'), actArea=document.getElementById('qActionArea');
+  const safe=s=>s.replace(/'/g,"\\'");
+  ansArea.innerHTML=`<div class="q-choices">${q.choices.map(c=>`<button class="q-choice-btn" onclick="checkChoice(this,'${safe(c)}','${safe(q.answer)}')">${c}</button>`).join('')}</div>`;
+  actArea.innerHTML='';
+}
+
+function showHint(){
+  const q=questions[qIndex]; if(!q.hint||hintUsed) return;
+  hintUsed=true;
+  document.getElementById('hintBox').textContent=q.hint;
+  document.getElementById('hintBox').classList.remove('hidden');
+  document.getElementById('hintBtn').disabled=true;
+  ME.AudioFX.hint();
+}
+
+function updateStreakBanner(){
+  const el=document.getElementById('streakBanner');
+  if(streak>=3){ el.classList.add('visible'); el.textContent=`🔥 ${streak} in a row!`; }
+  else el.classList.remove('visible');
+}
+
+function checkChoice(btn,chosen,correct){
+  if(answered)return; answered=true;
+  const all=btn.closest('.q-choices').querySelectorAll('.q-choice-btn');
+  all.forEach(b=>b.disabled=true);
+  if(chosen.trim().toLowerCase()===correct.trim().toLowerCase()){
+    btn.classList.add('correct'); score++; streak++; ME.AudioFX.correct(); showFeedback(true,correct);
+  } else {
+    btn.classList.add('wrong'); streak=0; ME.AudioFX.wrong();
+    all.forEach(b=>{if(b.textContent.trim().toLowerCase()===correct.trim().toLowerCase())b.classList.add('correct');});
+    showFeedback(false,correct);
+  }
+  if(streak>0&&streak%3===0) setTimeout(()=>ME.AudioFX.streak(),200);
+  showNext();
+}
+
+function showFeedback(ok,answer){
+  const fb=document.getElementById('qFeedback');
+  fb.className='q-feedback '+(ok?'correct':'wrong');
+  fb.textContent=ok?'✓ Correct!':`✗ The answer is: ${answer}`;
+}
+
+function showNext(){
+  const isLast=qIndex+1>=questions.length;
+  document.getElementById('qActionArea').innerHTML=`<button class="q-next-btn" onclick="${isLast?'finishMission':'nextQuestion'}()">${isLast?'🏁 See Results':'Next Question →'}</button>`;
+}
+
+function nextQuestion(){ qIndex++; showQuestion(); }
+function closeReadingModal(){ document.getElementById('readingModal').classList.add('hidden'); currentMission=null; }
+
+function spawnConfetti(){
+  const wrap=document.getElementById('confettiWrap'); wrap.innerHTML='';
+  const colors=['#a78bfa','#f5a623','#4ecdc4','#56cf8a','#e84393','#f0f4ff'];
+  for(let i=0;i<60;i++){
+    const p=document.createElement('div'); p.className='confetti-piece';
+    p.style.left=Math.random()*100+'vw';
+    p.style.background=colors[Math.floor(Math.random()*colors.length)];
+    p.style.width=(6+Math.random()*8)+'px'; p.style.height=(6+Math.random()*8)+'px';
+    p.style.animationDuration=(1.5+Math.random()*1.5)+'s';
+    p.style.animationDelay=(Math.random()*0.5)+'s';
+    wrap.appendChild(p);
+  }
+  setTimeout(()=>wrap.innerHTML='',3500);
+}
+
+function finishMission(){
+  document.getElementById('readingModal').classList.add('hidden');
+  const oldBest=ME.getBest(currentMission,SUBJECT);
+  ME.markComplete(currentMission,SUBJECT,score);
+  justCompleted=currentMission; buildGrid();
+  const pct=Math.round((score/questions.length)*100);
+  if(pct===100){ ME.AudioFX.perfect(); spawnConfetti(); } else ME.AudioFX.complete();
+  document.getElementById('resultEmoji').textContent=pct===100?'🏆':pct>=80?'🌟':pct>=60?'👍':'💪';
+  document.getElementById('resultTitle').textContent=pct===100?'Perfect Score!':pct>=80?'Great Job!':pct>=60?'Good Reading!':'Try Again!';
+  document.getElementById('resultScore').textContent=`${score} / ${questions.length}`;
+  document.getElementById('resultSubtitle').textContent=`That's ${pct}% — "${currentPassage.title}" complete!`;
+  const beatMsg=document.getElementById('resultBeatMsg');
+  if(oldBest!==null&&score>oldBest) beatMsg.textContent=`🎉 New best score! (was ${oldBest}/5)`;
+  else if(oldBest!==null&&score===oldBest) beatMsg.textContent='Matched your best score!';
+  else beatMsg.textContent='';
+  document.getElementById('resultModal').classList.remove('hidden');
+}
+
+function retryMission(){ document.getElementById('resultModal').classList.add('hidden'); startMission(currentMission, currentMission-1); }
+function closeResultModal(){ document.getElementById('resultModal').classList.add('hidden'); currentMission=null; }
+
+buildGrid();
+</script>
+</body>
+</html>
