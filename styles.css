@@ -465,3 +465,157 @@ body::before {
   .nav-tab { padding: 6px 12px; font-size: 0.8rem; }
   .modal-box { padding: 28px 20px; }
 }
+
+/* ─── v3 additions ──────────────────────────────────────── */
+
+/* Streak banner */
+.streak-banner {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background: linear-gradient(135deg, rgba(245,166,35,0.18), rgba(245,166,35,0.06));
+  border: 1px solid rgba(245,166,35,0.3);
+  border-radius: 10px;
+  padding: 10px 16px;
+  margin-bottom: 16px;
+  font-family: 'Space Grotesk', sans-serif;
+  font-weight: 700;
+  font-size: 1rem;
+  color: var(--gold);
+  animation: streakPop 0.35s cubic-bezier(0.34,1.56,0.64,1);
+}
+.streak-banner.visible { display: flex; }
+@keyframes streakPop {
+  from { transform: scale(0.7); opacity: 0; }
+  to   { transform: scale(1);   opacity: 1; }
+}
+
+/* Hint button & box */
+.hint-row {
+  display: flex;
+  justify-content: flex-start;
+  margin-bottom: 14px;
+}
+.hint-btn {
+  background: rgba(78,205,196,0.1);
+  border: 1px solid rgba(78,205,196,0.25);
+  border-radius: 8px;
+  padding: 7px 14px;
+  color: var(--mint);
+  font-family: 'Space Grotesk', sans-serif;
+  font-weight: 600;
+  font-size: 0.8rem;
+  cursor: pointer;
+  transition: all 0.15s;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.hint-btn:hover { background: rgba(78,205,196,0.18); }
+.hint-btn:disabled { opacity: 0.4; cursor: default; }
+.hint-box {
+  background: rgba(78,205,196,0.07);
+  border: 1px solid rgba(78,205,196,0.2);
+  border-radius: 10px;
+  padding: 12px 14px;
+  margin-bottom: 14px;
+  color: var(--mint);
+  font-size: 0.9rem;
+  line-height: 1.5;
+  animation: hintFade 0.25s ease;
+}
+@keyframes hintFade { from{opacity:0;transform:translateY(-6px);} to{opacity:1;transform:translateY(0);} }
+
+/* Beat-your-best banner on mission start */
+.beat-banner {
+  background: rgba(86,207,138,0.08);
+  border: 1px solid rgba(86,207,138,0.2);
+  border-radius: 10px;
+  padding: 12px 16px;
+  margin-bottom: 20px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 0.9rem;
+  color: var(--success);
+}
+.beat-banner .beat-score {
+  font-family: 'Space Grotesk', sans-serif;
+  font-weight: 700;
+}
+
+/* Mission complete star burst on grid */
+@keyframes starBurst {
+  0%   { transform: scale(1); }
+  40%  { transform: scale(1.12); box-shadow: 0 0 0 6px rgba(245,166,35,0.25); }
+  100% { transform: scale(1); box-shadow: none; }
+}
+.mission-btn.just-completed {
+  animation: starBurst 0.6s cubic-bezier(0.34,1.56,0.64,1);
+  border-color: rgba(245,166,35,0.5) !important;
+}
+
+/* Perfect score badge on card */
+.perfect-badge {
+  position: absolute;
+  top: 10px; right: 10px;
+  background: var(--gold);
+  color: var(--ink);
+  font-family: 'Space Grotesk', sans-serif;
+  font-weight: 700;
+  font-size: 0.65rem;
+  letter-spacing: 1px;
+  padding: 3px 8px;
+  border-radius: 100px;
+  text-transform: uppercase;
+}
+
+/* Score stars in mission card */
+.mission-stars {
+  display: flex;
+  gap: 2px;
+  margin-top: 2px;
+}
+.mission-star { font-size: 0.75rem; line-height: 1; }
+
+/* Progress summary above grid */
+.grid-summary {
+  position: relative; z-index: 1;
+  max-width: 1100px;
+  margin: 0 auto 4px;
+  padding: 0 28px;
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+.grid-stat {
+  display: flex;
+  align-items: baseline;
+  gap: 5px;
+}
+.grid-stat-val {
+  font-family: 'Space Grotesk', sans-serif;
+  font-weight: 700;
+  font-size: 1.4rem;
+  color: var(--gold);
+}
+.grid-stat-lbl { color: var(--soft); font-size: 0.8rem; }
+
+/* Confetti burst (CSS only, triggered by JS class) */
+.confetti-wrap {
+  position: fixed; inset: 0; pointer-events: none; z-index: 500;
+  overflow: hidden;
+}
+.confetti-piece {
+  position: absolute;
+  top: -10px;
+  width: 10px; height: 10px;
+  border-radius: 2px;
+  animation: confettiFall linear forwards;
+}
+@keyframes confettiFall {
+  0%   { transform: translateY(0) rotate(0deg);   opacity: 1; }
+  100% { transform: translateY(110vh) rotate(720deg); opacity: 0; }
+}

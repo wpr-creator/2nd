@@ -26,7 +26,9 @@
   <p class="page-subtitle">Conquer every mission to become a Math Master Explorer!</p>
 </div>
 
+<div class="grid-summary" id="gridSummary"></div>
 <div class="missions-grid" id="missionsGrid"></div>
+<div class="confetti-wrap" id="confettiWrap"></div>
 
 <!-- LOCK MODAL -->
 <div class="modal-overlay hidden" id="lockModal">
@@ -53,8 +55,20 @@
       </div>
       <div class="q-progress-bar"><div class="q-progress-fill" id="qProgressFill" style="width:0%"></div></div>
     </div>
+    <!-- beat your best -->
+    <div class="beat-banner hidden" id="beatBanner">
+      <span>🎯</span>
+      <span>Your best score: <span class="beat-score" id="beatScore"></span> — try to beat it!</span>
+    </div>
+    <!-- streak -->
+    <div class="streak-banner" id="streakBanner"></div>
     <div class="q-text" id="qText"></div>
     <div id="qAnswerArea"></div>
+    <!-- hint -->
+    <div class="hint-row">
+      <button class="hint-btn" id="hintBtn" onclick="showHint()">💡 Hint</button>
+    </div>
+    <div class="hint-box hidden" id="hintBox"></div>
     <div class="q-feedback" id="qFeedback"></div>
     <div id="qActionArea"></div>
   </div>
@@ -67,6 +81,7 @@
     <div class="result-title" id="resultTitle"></div>
     <div class="result-score" id="resultScore"></div>
     <div class="result-subtitle" id="resultSubtitle"></div>
+    <div id="resultBeatMsg" style="text-align:center;color:var(--success);font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:0.95rem;margin-bottom:16px;"></div>
     <div class="result-btns">
       <button class="result-btn primary" onclick="retryMission()">Try Again</button>
       <button class="result-btn secondary" onclick="closeResultModal()">Mission List</button>
@@ -78,14 +93,22 @@
 <script>
 const SUBJECT = 'math';
 const ME = window.MissionEngine;
-let currentMission = null, questions = [], qIndex = 0, score = 0, answered = false, pendingLock = null;
+let currentMission=null, questions=[], qIndex=0, score=0, answered=false, pendingLock=null;
+let streak=0, hintUsed=false, prevBest=null, justCompletedMission=null;
 
-document.getElementById('navName').textContent = ME.getStudentName() || '';
+document.getElementById('navName').textContent = ME.getStudentName()||'';
+
+function starsHTML(best, total=20) {
+  if (best===null) return '';
+  const pct = best/total;
+  const filled = pct===1 ? 3 : pct>=0.8 ? 2 : pct>=0.6 ? 1 : 0;
+  return '<div class="mission-stars">' + [0,1,2].map(i=>`<span class="mission-star">${i<filled?'⭐':'☆'}</span>`).join('') + '</div>';
+}
 
 function buildGrid() {
   const grid = document.getElementById('missionsGrid');
   grid.innerHTML = '';
-  const sections = [
+  const sections=[
     {from:1,to:5,label:'Missions 1–5 · Addition & Subtraction Within 20'},
     {from:6,to:10,label:'Missions 6–10 · Skip Counting, Even/Odd, Word Problems'},
     {from:11,to:15,label:'Missions 11–15 · Place Value & Word Problems'},
@@ -93,131 +116,182 @@ function buildGrid() {
     {from:21,to:25,label:'Missions 21–25 · Addition & Subtraction with Regrouping'},
     {from:26,to:30,label:'Missions 26–30 · Mixed Review'},
   ];
-  for (const section of sections) {
-    const div = document.createElement('div');
-    div.className = 'section-label';
-    div.innerHTML = `<span>${section.label}</span>`;
-    grid.appendChild(div);
-    for (let n = section.from; n <= section.to; n++) {
-      const locked = ME.isLocked(n) && !ME.isUnlocked(n, SUBJECT);
-      const best = ME.getBest(n, SUBJECT);
-      const btn = document.createElement('button');
-      btn.className = 'mission-btn' + (locked?' locked':'') + (best!==null?' completed':'');
-      btn.innerHTML = `
+  let totalDone=0, totalPerf=0;
+  for(const section of sections){
+    const div=document.createElement('div'); div.className='section-label';
+    div.innerHTML=`<span>${section.label}</span>`; grid.appendChild(div);
+    for(let n=section.from;n<=section.to;n++){
+      const locked=ME.isLocked(n)&&!ME.isUnlocked(n,SUBJECT);
+      const best=ME.getBest(n,SUBJECT);
+      if(best!==null) totalDone++;
+      if(best===20) totalPerf++;
+      const btn=document.createElement('button');
+      btn.className='mission-btn'+(locked?' locked':'')+(best!==null?' completed':'');
+      btn.id=`missionBtn${n}`;
+      btn.innerHTML=`
+        ${best===20?'<div class="perfect-badge">Perfect!</div>':''}
         <div class="mission-number">Mission ${n}</div>
         <div class="mission-name">${ME.mathMissionInfo[n]}</div>
-        ${best!==null?`<div class="mission-score${best<14?' low':''}">Best: ${best}/20</div>`:''}
+        ${best!==null?`<div class="mission-score${best<14?' low':''}">Best: ${best}/20</div>${starsHTML(best)}`:''}
       `;
-      btn.addEventListener('click', () => clickMission(n, locked));
+      if(n===justCompletedMission){ btn.classList.add('just-completed'); setTimeout(()=>btn.classList.remove('just-completed'),700); }
+      btn.addEventListener('click',()=>clickMission(n,locked));
       grid.appendChild(btn);
     }
   }
+  document.getElementById('gridSummary').innerHTML=`
+    <div class="grid-stat"><div class="grid-stat-val">${totalDone}</div><div class="grid-stat-lbl">missions done</div></div>
+    <div class="grid-stat"><div class="grid-stat-val">${totalPerf}</div><div class="grid-stat-lbl">perfect scores</div></div>
+    <div class="grid-stat"><div class="grid-stat-val">${30-totalDone}</div><div class="grid-stat-lbl">remaining</div></div>
+  `;
 }
 
-function clickMission(n, locked) {
-  if (locked) {
-    pendingLock = n;
-    document.getElementById('lockInput').value = '';
-    document.getElementById('lockError').textContent = '';
+function clickMission(n,locked){
+  if(locked){
+    pendingLock=n; document.getElementById('lockInput').value=''; document.getElementById('lockError').textContent='';
     document.getElementById('lockModal').classList.remove('hidden');
-    setTimeout(() => document.getElementById('lockInput').focus(), 50);
+    setTimeout(()=>document.getElementById('lockInput').focus(),50);
   } else { startMission(n); }
 }
 
-function closeLockModal() { document.getElementById('lockModal').classList.add('hidden'); pendingLock = null; }
-function submitLockCode() {
-  const code = document.getElementById('lockInput').value.trim().toUpperCase();
-  if (ME.unlockMission(pendingLock, SUBJECT, code)) {
-    closeLockModal(); buildGrid(); startMission(pendingLock);
-  } else {
-    document.getElementById('lockError').textContent = 'That code is not correct. Ask your teacher!';
-  }
+function closeLockModal(){ document.getElementById('lockModal').classList.add('hidden'); pendingLock=null; }
+function submitLockCode(){
+  const code=document.getElementById('lockInput').value.trim().toUpperCase();
+  if(ME.unlockMission(pendingLock,SUBJECT,code)){ closeLockModal(); buildGrid(); startMission(pendingLock); }
+  else document.getElementById('lockError').textContent='That code is not correct. Ask your teacher!';
 }
-document.getElementById('lockInput').addEventListener('keydown', e => { if(e.key==='Enter') submitLockCode(); });
+document.getElementById('lockInput').addEventListener('keydown',e=>{if(e.key==='Enter')submitLockCode();});
 
-function startMission(n) {
-  currentMission = n; questions = ME.shuffle(ME.mathGenerators[n]()); qIndex = 0; score = 0;
-  document.getElementById('qMissionLabel').textContent = `Mission ${n} — Math`;
+function startMission(n){
+  currentMission=n; questions=ME.shuffle(ME.mathGenerators[n]()); qIndex=0; score=0; streak=0;
+  prevBest=ME.getBest(n,SUBJECT);
+  document.getElementById('qMissionLabel').textContent=`Mission ${n} — Math`;
+  // beat banner
+  const beatBanner=document.getElementById('beatBanner');
+  if(prevBest!==null){ document.getElementById('beatScore').textContent=`${prevBest}/20`; beatBanner.classList.remove('hidden'); }
+  else beatBanner.classList.add('hidden');
   document.getElementById('questionModal').classList.remove('hidden');
   showQuestion();
 }
 
-function showQuestion() {
-  const q = questions[qIndex]; answered = false;
-  document.getElementById('qNumber').textContent = `Question ${qIndex+1} of ${questions.length}`;
-  document.getElementById('qProgressFill').style.width = `${(qIndex/questions.length)*100}%`;
-  document.getElementById('qText').textContent = q.q;
-  document.getElementById('qFeedback').textContent = '';
-  document.getElementById('qFeedback').className = 'q-feedback';
-  const ansArea = document.getElementById('qAnswerArea');
-  const actArea = document.getElementById('qActionArea');
-  if (q.type === 'choice') {
-    ansArea.innerHTML = `<div class="q-choices">${q.choices.map(c=>`<button class="q-choice-btn" onclick="checkChoice(this,'${c.replace(/'/g,"\\'")}','${q.answer.replace(/'/g,"\\'")}')"> ${c} </button>`).join('')}</div>`;
-    actArea.innerHTML = '';
+function showQuestion(){
+  const q=questions[qIndex]; answered=false; hintUsed=false;
+  document.getElementById('qNumber').textContent=`Question ${qIndex+1} of ${questions.length}`;
+  document.getElementById('qProgressFill').style.width=`${(qIndex/questions.length)*100}%`;
+  document.getElementById('qText').textContent=q.q;
+  document.getElementById('qFeedback').textContent=''; document.getElementById('qFeedback').className='q-feedback';
+  document.getElementById('hintBox').classList.add('hidden'); document.getElementById('hintBox').textContent='';
+  const hintBtn=document.getElementById('hintBtn');
+  hintBtn.disabled=!q.hint; hintBtn.textContent='💡 Hint';
+  updateStreakBanner();
+  const ansArea=document.getElementById('qAnswerArea'), actArea=document.getElementById('qActionArea');
+  if(q.type==='choice'){
+    const safe=s=>s.replace(/'/g,"\\'");
+    ansArea.innerHTML=`<div class="q-choices">${q.choices.map(c=>`<button class="q-choice-btn" onclick="checkChoice(this,'${safe(c)}','${safe(q.answer)}')">${c}</button>`).join('')}</div>`;
+    actArea.innerHTML='';
   } else {
-    ansArea.innerHTML = `<div class="q-input-row"><input class="q-input" id="answerInput" type="text" placeholder="Type your answer…" autocomplete="off"><button class="q-submit-btn" onclick="checkInput()">Check</button></div>`;
-    actArea.innerHTML = '';
-    setTimeout(() => {
-      const inp = document.getElementById('answerInput');
-      if (inp) { inp.focus(); inp.addEventListener('keydown', e => { if(e.key==='Enter'&&!answered) checkInput(); }); }
-    }, 50);
+    ansArea.innerHTML=`<div class="q-input-row"><input class="q-input" id="answerInput" type="text" placeholder="Type your answer…" autocomplete="off"><button class="q-submit-btn" onclick="checkInput()">Check</button></div>`;
+    actArea.innerHTML='';
+    setTimeout(()=>{ const inp=document.getElementById('answerInput'); if(inp){inp.focus();inp.addEventListener('keydown',e=>{if(e.key==='Enter'&&!answered)checkInput();});} },50);
   }
 }
 
-function checkChoice(btn, chosen, correct) {
-  if (answered) return; answered = true;
-  const all = btn.closest('.q-choices').querySelectorAll('.q-choice-btn');
-  all.forEach(b => b.disabled = true);
-  if (chosen.trim().toLowerCase() === correct.trim().toLowerCase()) {
-    btn.classList.add('correct'); score++; ME.AudioFX.correct(); showFeedback(true, correct);
+function showHint(){
+  const q=questions[qIndex]; if(!q.hint||hintUsed) return;
+  hintUsed=true;
+  document.getElementById('hintBox').textContent=q.hint;
+  document.getElementById('hintBox').classList.remove('hidden');
+  document.getElementById('hintBtn').disabled=true;
+  ME.AudioFX.hint();
+}
+
+function updateStreakBanner(){
+  const el=document.getElementById('streakBanner');
+  if(streak>=3){ el.classList.add('visible'); el.textContent=`🔥 ${streak} in a row!`; }
+  else el.classList.remove('visible');
+}
+
+function checkChoice(btn,chosen,correct){
+  if(answered)return; answered=true;
+  const all=btn.closest('.q-choices').querySelectorAll('.q-choice-btn');
+  all.forEach(b=>b.disabled=true);
+  if(chosen.trim().toLowerCase()===correct.trim().toLowerCase()){
+    btn.classList.add('correct'); score++; streak++; ME.AudioFX.correct(); showFeedback(true,correct);
   } else {
-    btn.classList.add('wrong'); ME.AudioFX.wrong();
-    all.forEach(b => { if(b.textContent.trim().toLowerCase()===correct.trim().toLowerCase()) b.classList.add('correct'); });
-    showFeedback(false, correct);
+    btn.classList.add('wrong'); streak=0; ME.AudioFX.wrong();
+    all.forEach(b=>{if(b.textContent.trim().toLowerCase()===correct.trim().toLowerCase())b.classList.add('correct');});
+    showFeedback(false,correct);
   }
+  if(streak>0&&streak%3===0) setTimeout(()=>ME.AudioFX.streak(),200);
   showNext();
 }
 
-function checkInput() {
-  if (answered) return;
-  const inp = document.getElementById('answerInput'); if (!inp) return;
-  const val = inp.value.trim().toLowerCase(), correct = questions[qIndex].answer.trim().toLowerCase();
-  answered = true; inp.disabled = true;
-  if (val === correct) { inp.classList.add('correct'); score++; ME.AudioFX.correct(); showFeedback(true, questions[qIndex].answer); }
-  else { inp.classList.add('wrong'); ME.AudioFX.wrong(); showFeedback(false, questions[qIndex].answer); }
+function checkInput(){
+  if(answered)return;
+  const inp=document.getElementById('answerInput'); if(!inp)return;
+  const val=inp.value.trim(), q=questions[qIndex];
+  answered=true; inp.disabled=true;
+  if(ME.checkAnswer(val, q.answer, q.alternates||[])){
+    inp.classList.add('correct'); score++; streak++; ME.AudioFX.correct(); showFeedback(true,q.answer);
+  } else {
+    inp.classList.add('wrong'); streak=0; ME.AudioFX.wrong(); showFeedback(false,q.answer);
+  }
+  if(streak>0&&streak%3===0) setTimeout(()=>ME.AudioFX.streak(),200);
   showNext();
 }
 
-function showFeedback(ok, answer) {
-  const fb = document.getElementById('qFeedback');
-  fb.className = 'q-feedback ' + (ok?'correct':'wrong');
-  fb.textContent = ok ? '✓ Correct!' : `✗ The answer is: ${answer}`;
+function showFeedback(ok,answer){
+  const fb=document.getElementById('qFeedback');
+  fb.className='q-feedback '+(ok?'correct':'wrong');
+  fb.textContent=ok?'✓ Correct!':`✗ The answer is: ${answer}`;
 }
 
-function showNext() {
-  const isLast = qIndex+1 >= questions.length;
-  document.getElementById('qActionArea').innerHTML = `<button class="q-next-btn" onclick="${isLast?'finishMission':'nextQuestion'}()">${isLast?'🏁 See Results':'Next Question →'}</button>`;
+function showNext(){
+  const isLast=qIndex+1>=questions.length;
+  document.getElementById('qActionArea').innerHTML=`<button class="q-next-btn" onclick="${isLast?'finishMission':'nextQuestion'}()">${isLast?'🏁 See Results':'Next Question →'}</button>`;
 }
 
-function nextQuestion() { qIndex++; showQuestion(); }
-function closeQuestionModal() { document.getElementById('questionModal').classList.add('hidden'); currentMission=null; }
+function nextQuestion(){ qIndex++; showQuestion(); }
+function closeQuestionModal(){ document.getElementById('questionModal').classList.add('hidden'); currentMission=null; }
 
-function finishMission() {
+function spawnConfetti(){
+  const wrap=document.getElementById('confettiWrap'); wrap.innerHTML='';
+  const colors=['#f5a623','#4ecdc4','#56cf8a','#e84393','#f0f4ff','#ff6b6b'];
+  for(let i=0;i<60;i++){
+    const p=document.createElement('div'); p.className='confetti-piece';
+    p.style.left=Math.random()*100+'vw';
+    p.style.background=colors[Math.floor(Math.random()*colors.length)];
+    p.style.width=(6+Math.random()*8)+'px'; p.style.height=(6+Math.random()*8)+'px';
+    p.style.animationDuration=(1.5+Math.random()*1.5)+'s';
+    p.style.animationDelay=(Math.random()*0.5)+'s';
+    wrap.appendChild(p);
+  }
+  setTimeout(()=>wrap.innerHTML='',3500);
+}
+
+function finishMission(){
   document.getElementById('questionModal').classList.add('hidden');
-  ME.markComplete(currentMission, SUBJECT, score);
+  const oldBest=ME.getBest(currentMission,SUBJECT);
+  ME.markComplete(currentMission,SUBJECT,score);
+  justCompletedMission=currentMission;
   buildGrid();
-  const pct = Math.round((score/questions.length)*100);
-  const emoji = pct===100?'🏆':pct>=80?'🌟':pct>=60?'👍':'💪';
-  if (pct===100) ME.AudioFX.perfect(); else ME.AudioFX.complete();
-  document.getElementById('resultEmoji').textContent = emoji;
-  document.getElementById('resultTitle').textContent = pct===100?'Perfect Score!':pct>=80?'Great Work!':pct>=60?'Good Job!':'Keep Practicing!';
-  document.getElementById('resultScore').textContent = `${score} / ${questions.length}`;
-  document.getElementById('resultSubtitle').textContent = `That's ${pct}% — Mission ${currentMission} complete!`;
+  const pct=Math.round((score/questions.length)*100);
+  const newBest=ME.getBest(currentMission,SUBJECT);
+  if(pct===100){ ME.AudioFX.perfect(); spawnConfetti(); }
+  else ME.AudioFX.complete();
+  document.getElementById('resultEmoji').textContent=pct===100?'🏆':pct>=80?'🌟':pct>=60?'👍':'💪';
+  document.getElementById('resultTitle').textContent=pct===100?'Perfect Score!':pct>=80?'Great Work!':pct>=60?'Good Job!':'Keep Practicing!';
+  document.getElementById('resultScore').textContent=`${score} / ${questions.length}`;
+  document.getElementById('resultSubtitle').textContent=`That's ${pct}% — Mission ${currentMission} complete!`;
+  const beatMsg=document.getElementById('resultBeatMsg');
+  if(oldBest!==null&&score>oldBest) beatMsg.textContent=`🎉 New best score! (was ${oldBest}/20)`;
+  else if(oldBest!==null&&score===oldBest) beatMsg.textContent=`Matched your best score!`;
+  else beatMsg.textContent='';
   document.getElementById('resultModal').classList.remove('hidden');
 }
 
-function retryMission() { document.getElementById('resultModal').classList.add('hidden'); startMission(currentMission); }
-function closeResultModal() { document.getElementById('resultModal').classList.add('hidden'); currentMission=null; }
+function retryMission(){ document.getElementById('resultModal').classList.add('hidden'); startMission(currentMission); }
+function closeResultModal(){ document.getElementById('resultModal').classList.add('hidden'); currentMission=null; }
 
 buildGrid();
 </script>
