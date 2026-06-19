@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Teacher Dashboard — Mission Academy</title>
+<link rel="stylesheet" href="styles.css">
+<style>
+  .dash-header { position:relative;z-index:1; padding:48px 28px 28px; max-width:1100px; margin:0 auto; }
+  .dash-title { font-family:'Space Grotesk',sans-serif; font-size:clamp(1.8rem,4vw,2.6rem); font-weight:700; margin-bottom:6px; }
+  .dash-sub { color:var(--soft); font-size:0.95rem; }
+
+  /* Gate */
+  .dash-gate { position:relative;z-index:1; max-width:440px; margin:60px auto; padding:0 24px; text-align:center; }
+  .dash-gate-box { background:var(--panel); border:1px solid rgba(255,255,255,0.1); border-radius:20px; padding:44px 36px; }
+  .dash-gate-icon { font-size:3rem; margin-bottom:16px; }
+  .dash-gate-box h2 { font-family:'Space Grotesk',sans-serif; font-size:1.6rem; font-weight:700; margin-bottom:8px; }
+  .dash-gate-box p { color:var(--soft); margin-bottom:24px; font-size:0.9rem; }
+  .dash-gate-input {
+    width:100%; background:rgba(255,255,255,0.06); border:1.5px solid rgba(255,255,255,0.15);
+    border-radius:10px; padding:14px; color:var(--white); font-family:'Space Grotesk',sans-serif;
+    font-size:1rem; text-align:center; letter-spacing:3px; outline:none; margin-bottom:12px;
+  }
+  .dash-gate-input:focus { border-color:var(--gold); }
+  .dash-gate-btn {
+    width:100%; background:var(--gold); color:var(--ink); border:none; border-radius:10px;
+    padding:14px; font-family:'Space Grotesk',sans-serif; font-weight:700; font-size:0.95rem; cursor:pointer;
+  }
+  .dash-gate-error { color:var(--danger); font-size:0.85rem; margin-top:8px; }
+
+  /* Dashboard content */
+  .dash-content { position:relative;z-index:1; max-width:1100px; margin:0 auto; padding:0 28px 80px; }
+  .dash-content.hidden { display:none; }
+
+  /* Student selector */
+  .student-tabs { display:flex; gap:8px; flex-wrap:wrap; margin-bottom:28px; }
+  .student-tab {
+    padding:8px 18px; border-radius:100px; border:1px solid rgba(255,255,255,0.12);
+    background:transparent; color:var(--soft); font-family:'Space Grotesk',sans-serif;
+    font-size:0.85rem; font-weight:600; cursor:pointer; transition:all 0.15s;
+  }
+  .student-tab:hover { color:var(--white); border-color:rgba(255,255,255,0.3); }
+  .student-tab.active { background:var(--gold); color:var(--ink); border-color:var(--gold); }
+  .no-students { color:var(--soft); font-size:0.95rem; padding:40px 0; }
+
+  /* Summary cards */
+  .summary-row { display:grid; grid-template-columns:repeat(auto-fill,minmax(160px,1fr)); gap:14px; margin-bottom:32px; }
+  .summary-card { background:var(--panel); border:1px solid rgba(255,255,255,0.07); border-radius:14px; padding:20px; }
+  .summary-val { font-family:'Space Grotesk',sans-serif; font-size:2rem; font-weight:700; color:var(--gold); }
+  .summary-lbl { color:var(--soft); font-size:0.8rem; margin-top:4px; }
+
+  /* Mission table */
+  .subject-block { margin-bottom:40px; }
+  .subject-block-title { font-family:'Space Grotesk',sans-serif; font-size:0.75rem; font-weight:600; letter-spacing:2.5px; text-transform:uppercase; color:var(--dim); margin-bottom:14px; display:flex; align-items:center; gap:12px; }
+  .subject-block-title::after { content:''; flex:1; height:1px; background:rgba(255,255,255,0.07); }
+  .mission-table { width:100%; border-collapse:collapse; }
+  .mission-table th { font-family:'Space Grotesk',sans-serif; font-size:0.75rem; font-weight:600; letter-spacing:1px; text-transform:uppercase; color:var(--dim); padding:8px 12px; text-align:left; border-bottom:1px solid rgba(255,255,255,0.07); }
+  .mission-table td { padding:8px 12px; border-bottom:1px solid rgba(255,255,255,0.04); font-size:0.9rem; color:var(--soft); }
+  .mission-table td:first-child { color:var(--white); font-weight:500; }
+  .score-chip {
+    display:inline-block; padding:3px 10px; border-radius:100px; font-family:'Space Grotesk',sans-serif;
+    font-size:0.78rem; font-weight:700;
+  }
+  .score-chip.perfect { background:rgba(245,166,35,0.2); color:var(--gold); }
+  .score-chip.good    { background:rgba(86,207,138,0.15); color:var(--success); }
+  .score-chip.ok      { background:rgba(78,205,196,0.15); color:var(--mint); }
+  .score-chip.low     { background:rgba(255,107,107,0.15); color:var(--danger); }
+  .score-chip.none    { background:rgba(255,255,255,0.05); color:var(--dim); }
+
+  /* Print */
+  .print-btn {
+    background:rgba(255,255,255,0.07); border:1px solid rgba(255,255,255,0.15); border-radius:10px;
+    padding:10px 20px; color:var(--white); font-family:'Space Grotesk',sans-serif; font-weight:600;
+    font-size:0.85rem; cursor:pointer; margin-bottom:28px; transition:background 0.15s;
+  }
+  .print-btn:hover { background:rgba(255,255,255,0.12); }
+
+  @media print {
+    body { background:#fff!important; color:#000!important; }
+    body::before { display:none; }
+    .top-nav, .dash-gate, .print-btn, .student-tabs { display:none!important; }
+    .dash-content { padding:0!important; }
+    .mission-table td, .mission-table th { color:#000!important; border-color:#ddd!important; }
+    .summary-card { border:1px solid #ddd!important; background:#f9f9f9!important; }
+    .summary-val, .summary-lbl { color:#333!important; }
+  }
+</style>
+</head>
+<body>
+
+<nav class="top-nav">
+  <a href="index.html" class="nav-logo">🚀 Mission <span>Academy</span></a>
+  <div class="nav-tabs">
+    <a href="math.html" class="nav-tab">➕ Math</a>
+    <a href="ela.html"  class="nav-tab">📖 ELA</a>
+  </div>
+</nav>
+
+<!-- Gate -->
+<div id="gateSection">
+  <div class="dash-gate">
+    <div class="dash-gate-box">
+      <div class="dash-gate-icon">📊</div>
+      <h2>Teacher Dashboard</h2>
+      <p>Enter the teacher code to view student progress reports.</p>
+      <input class="dash-gate-input" id="gateInput" type="password" placeholder="Teacher code" maxlength="20">
+      <button class="dash-gate-btn" onclick="checkGate()">View Dashboard</button>
+      <div class="dash-gate-error" id="gateError"></div>
+    </div>
+  </div>
+</div>
+
+<!-- Dashboard content -->
+<div class="dash-content hidden" id="dashContent">
+  <div class="dash-header">
+    <div class="page-eyebrow" style="color:var(--gold)">Teacher Dashboard</div>
+    <div class="dash-title">Student Progress</div>
+    <p class="dash-sub">All progress data stored locally in this browser.</p>
+  </div>
+
+  <div style="position:relative;z-index:1;max-width:1100px;margin:0 auto;padding:0 28px;">
+    <button class="print-btn" onclick="window.print()">🖨️ Print This Report</button>
+    <div class="student-tabs" id="studentTabs"></div>
+    <div id="noStudents" class="no-students hidden">No student data found yet. Students need to use this browser to create progress records.</div>
+  </div>
+
+  <div class="dash-content" id="studentReport" style="padding-top:0;"></div>
+</div>
+
+<script src="engine.js"></script>
+<script>
+const ME = window.MissionEngine;
+let allStudents = {};
+let activeStudent = null;
+
+document.getElementById('gateInput').addEventListener('keydown', e => { if(e.key==='Enter') checkGate(); });
+
+function checkGate() {
+  const code = document.getElementById('gateInput').value.trim().toUpperCase();
+  if (code === ME.TEACHER_CODE) {
+    document.getElementById('gateSection').classList.add('hidden');
+    document.getElementById('dashContent').classList.remove('hidden');
+    loadDashboard();
+  } else {
+    document.getElementById('gateError').textContent = 'Incorrect code.';
+  }
+}
+
+function loadDashboard() {
+  allStudents = ME.getAllStudentProgress();
+  const names = Object.keys(allStudents);
+  const tabsEl = document.getElementById('studentTabs');
+  const noEl = document.getElementById('noStudents');
+
+  if (names.length === 0) { noEl.classList.remove('hidden'); return; }
+
+  tabsEl.innerHTML = names.map(n =>
+    `<button class="student-tab" onclick="selectStudent('${n.replace(/'/g,"\\'")}', this)">${n.replace(/_/g,' ')}</button>`
+  ).join('');
+
+  // auto-select first
+  const firstBtn = tabsEl.querySelector('.student-tab');
+  if (firstBtn) { firstBtn.classList.add('active'); selectStudent(names[0]); }
+}
+
+function selectStudent(rawName, btn) {
+  if (btn) {
+    document.querySelectorAll('.student-tab').forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active');
+  }
+  activeStudent = rawName;
+  renderReport(rawName);
+}
+
+function scoreChip(best, total=20) {
+  if (best === null) return `<span class="score-chip none">—</span>`;
+  const pct = (best/total)*100;
+  const cls = pct===100?'perfect':pct>=80?'good':pct>=60?'ok':'low';
+  return `<span class="score-chip ${cls}">${best}/${total}</span>`;
+}
+
+function renderReport(rawName) {
+  const data = allStudents[rawName] || {};
+  const mathP = data.math || {};
+  const elaP  = data.ela  || {};
+  const displayName = rawName.replace(/_/g,' ');
+
+  function countDone(p, total) { let n=0; for(let i=1;i<=total;i++) if(p[`best_${i}`]!=null) n++; return n; }
+  function countPerf(p, total) { let n=0; for(let i=1;i<=total;i++) if(p[`best_${i}`]===20) n++; return n; }
+  function avgScore(p, total) {
+    let s=0,c=0; for(let i=1;i<=total;i++) if(p[`best_${i}`]!=null){s+=p[`best_${i}`];c++;} return c?Math.round((s/c/20)*100):0;
+  }
+
+  const mathDone=countDone(mathP,30), elaDone=countDone(elaP,60);
+  const mathPerf=countPerf(mathP,30), elaPerf=countPerf(elaP,60);
+  const mathAvg=avgScore(mathP,30), elaAvg=avgScore(elaP,60);
+
+  // Math table rows
+  const mathRows = ME.mathMissionInfo.slice(1).map((info,i)=>{
+    const n=i+1, best=mathP[`best_${n}`]??null;
+    return `<tr><td>Mission ${n}</td><td>${info}</td><td>${scoreChip(best)}</td></tr>`;
+  }).join('');
+
+  // ELA table rows
+  const elaRows = ME.elaMissionInfo.slice(1).map((info,i)=>{
+    const n=i+1, best=elaP[`best_${n}`]??null;
+    return `<tr><td>Mission ${n}</td><td>${info}</td><td>${scoreChip(best)}</td></tr>`;
+  }).join('');
+
+  document.getElementById('studentReport').innerHTML = `
+    <div style="max-width:1100px;margin:0 auto;padding:0 28px 80px;">
+      <div style="font-family:'Space Grotesk',sans-serif;font-size:1.4rem;font-weight:700;margin-bottom:20px;">${displayName}</div>
+
+      <div class="summary-row">
+        <div class="summary-card"><div class="summary-val">${mathDone}/30</div><div class="summary-lbl">Math Missions Done</div></div>
+        <div class="summary-card"><div class="summary-val">${mathAvg}%</div><div class="summary-lbl">Math Avg Score</div></div>
+        <div class="summary-card"><div class="summary-val">${mathPerf}</div><div class="summary-lbl">Math Perfect Scores</div></div>
+        <div class="summary-card"><div class="summary-val">${elaDone}/60</div><div class="summary-lbl">ELA Missions Done</div></div>
+        <div class="summary-card"><div class="summary-val">${elaAvg}%</div><div class="summary-lbl">ELA Avg Score</div></div>
+        <div class="summary-card"><div class="summary-val">${elaPerf}</div><div class="summary-lbl">ELA Perfect Scores</div></div>
+      </div>
+
+      <div class="subject-block">
+        <div class="subject-block-title">Math Missions</div>
+        <table class="mission-table">
+          <thead><tr><th>Mission</th><th>Topic</th><th>Best Score</th></tr></thead>
+          <tbody>${mathRows}</tbody>
+        </table>
+      </div>
+
+      <div class="subject-block">
+        <div class="subject-block-title">ELA Missions</div>
+        <table class="mission-table">
+          <thead><tr><th>Mission</th><th>Topic</th><th>Best Score</th></tr></thead>
+          <tbody>${elaRows}</tbody>
+        </table>
+      </div>
+    </div>
+  `;
+}
+</script>
+</body>
+</html>
