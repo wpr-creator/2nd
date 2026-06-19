@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mission Academy — 2nd Grade</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;600;700&family=DM+Sans:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --ink: #1a1a2e;
+    --panel: #16213e;
+    --card: #0f3460;
+    --gold: #f5a623;
+    --mint: #4ecdc4;
+    --rose: #e84393;
+    --white: #f0f4ff;
+    --soft: #a8b2d8;
+    --radius: 14px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: var(--ink);
+    color: var(--white);
+    font-family: 'DM Sans', sans-serif;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+  /* Stars background */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      radial-gradient(1px 1px at 15% 20%, rgba(255,255,255,0.6) 0%, transparent 100%),
+      radial-gradient(1px 1px at 30% 60%, rgba(255,255,255,0.4) 0%, transparent 100%),
+      radial-gradient(1.5px 1.5px at 55% 10%, rgba(255,255,255,0.7) 0%, transparent 100%),
+      radial-gradient(1px 1px at 70% 45%, rgba(255,255,255,0.3) 0%, transparent 100%),
+      radial-gradient(1px 1px at 85% 75%, rgba(255,255,255,0.5) 0%, transparent 100%),
+      radial-gradient(1.5px 1.5px at 42% 85%, rgba(255,255,255,0.6) 0%, transparent 100%),
+      radial-gradient(1px 1px at 8% 50%, rgba(255,255,255,0.4) 0%, transparent 100%),
+      radial-gradient(1px 1px at 93% 25%, rgba(255,255,255,0.5) 0%, transparent 100%),
+      radial-gradient(1.5px 1.5px at 65% 70%, rgba(255,255,255,0.3) 0%, transparent 100%),
+      radial-gradient(1px 1px at 25% 35%, rgba(255,255,255,0.6) 0%, transparent 100%);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  header {
+    position: relative;
+    z-index: 1;
+    text-align: center;
+    padding: 60px 20px 40px;
+  }
+  .logo-badge {
+    display: inline-block;
+    background: linear-gradient(135deg, var(--gold), #f7c948);
+    color: var(--ink);
+    font-family: 'Space Grotesk', sans-serif;
+    font-weight: 700;
+    font-size: 11px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    padding: 6px 18px;
+    border-radius: 100px;
+    margin-bottom: 20px;
+  }
+  h1 {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: clamp(2.4rem, 6vw, 4rem);
+    font-weight: 700;
+    line-height: 1.1;
+    color: var(--white);
+    margin-bottom: 12px;
+  }
+  h1 span { color: var(--gold); }
+  .tagline {
+    color: var(--soft);
+    font-size: 1.1rem;
+    margin-bottom: 0;
+  }
+
+  /* Planet / orbit decoration */
+  .orbit-ring {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    justify-content: center;
+    margin: 24px 0 48px;
+  }
+  .orbit-ring svg { opacity: 0.18; }
+
+  main {
+    position: relative;
+    z-index: 1;
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 0 20px 80px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 28px;
+  }
+  @media (max-width: 600px) { main { grid-template-columns: 1fr; } }
+
+  .mission-card {
+    background: var(--panel);
+    border: 1px solid rgba(255,255,255,0.07);
+    border-radius: 20px;
+    padding: 40px 36px;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 16px;
+    text-decoration: none;
+    color: inherit;
+    transition: transform 0.2s, box-shadow 0.2s;
+    position: relative;
+    overflow: hidden;
+  }
+  .mission-card::before {
+    content: '';
+    position: absolute;
+    top: -60px; right: -60px;
+    width: 180px; height: 180px;
+    border-radius: 50%;
+    opacity: 0.06;
+  }
+  .mission-card.math::before { background: var(--mint); }
+  .mission-card.ela::before { background: var(--rose); }
+  .mission-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 20px 60px rgba(0,0,0,0.4);
+  }
+  .card-icon {
+    font-size: 2.6rem;
+    line-height: 1;
+  }
+  .card-label {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 2.5px;
+    text-transform: uppercase;
+  }
+  .math .card-label { color: var(--mint); }
+  .ela .card-label { color: var(--rose); }
+  .card-title {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 1.9rem;
+    font-weight: 700;
+    line-height: 1.1;
+  }
+  .card-desc {
+    color: var(--soft);
+    font-size: 0.95rem;
+    line-height: 1.6;
+  }
+  .card-missions {
+    margin-top: 8px;
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+  }
+  .mission-pip {
+    width: 10px; height: 10px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.12);
+  }
+  .mission-pip.active { background: var(--gold); }
+  .card-cta {
+    margin-top: auto;
+    padding-top: 20px;
+    font-family: 'Space Grotesk', sans-serif;
+    font-weight: 600;
+    font-size: 0.95rem;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .math .card-cta { color: var(--mint); }
+  .ela .card-cta { color: var(--rose); }
+
+  footer {
+    position: relative; z-index: 1;
+    text-align: center;
+    padding: 20px;
+    color: var(--soft);
+    font-size: 0.8rem;
+    opacity: 0.5;
+  }
+</style>
+</head>
+<body>
+<header>
+  <div class="logo-badge">🚀 Mission Academy</div>
+  <h1>Welcome,<br><span>2nd Grade Explorer</span></h1>
+  <p class="tagline">Choose your mission. Learn something amazing.</p>
+</header>
+
+<main>
+  <a href="math.html" class="mission-card math">
+    <div class="card-icon">➕</div>
+    <div class="card-label">Mission Zone</div>
+    <div class="card-title">Math<br>Missions</div>
+    <p class="card-desc">Numbers, addition, subtraction, place value, and more. 30 missions await!</p>
+    <div class="card-missions">
+      <!-- 30 pips for 30 math missions -->
+      <div class="mission-pip active"></div><div class="mission-pip active"></div><div class="mission-pip active"></div><div class="mission-pip"></div><div class="mission-pip"></div><div class="mission-pip"></div><div class="mission-pip"></div><div class="mission-pip"></div><div class="mission-pip"></div><div class="mission-pip"></div><div class="mission-pip"></div><div class="mission-pip"></div><div class="mission-pip"></div><div class="mission-pip"></div><div class="mission-pip"></div><div class="mission-pip"></div><div class="mission-pip"></div><div class="mission-pip"></div><div class="mission-pip"></div><div class="mission-pip"></div><div class="mission-pip"></div><div class="mission-pip"></div><div class="mission-pip"></div><div class="mission-pip"></div><div class="mission-pip"></div><div class="mission-pip"></div><div class="mission-pip"></div><div class="mission-pip"></div><div class="mission-pip"></div><div class="mission-pip"></div>
+    </div>
+    <div class="card-cta">Launch Math Missions →</div>
+  </a>
+
+  <a href="ela.html" class="mission-card ela">
+    <div class="card-icon">📖</div>
+    <div class="card-label">Mission Zone</div>
+    <div class="card-title">ELA<br>Missions</div>
+    <p class="card-desc">Nouns, verbs, adjectives, and words! 60 language missions to conquer.</p>
+    <div class="card-missions">
+      <!-- 30 of 60 pips shown -->
+      <div class="mission-pip active"></div><div class="mission-pip active"></div><div class="mission-pip"></div><div class="mission-pip"></div><div class="mission-pip"></div><div class="mission-pip"></div><div class="mission-pip"></div><div class="mission-pip"></div><div class="mission-pip"></div><div class="mission-pip"></div><div class="mission-pip"></div><div class="mission-pip"></div><div class="mission-pip"></div><div class="mission-pip"></div><div class="mission-pip"></div><div class="mission-pip"></div><div class="mission-pip"></div><div class="mission-pip"></div><div class="mission-pip"></div><div class="mission-pip"></div><div class="mission-pip"></div><div class="mission-pip"></div><div class="mission-pip"></div><div class="mission-pip"></div><div class="mission-pip"></div><div class="mission-pip"></div><div class="mission-pip"></div><div class="mission-pip"></div><div class="mission-pip"></div><div class="mission-pip"></div>
+    </div>
+    <div class="card-cta">Launch ELA Missions →</div>
+  </a>
+</main>
+
+<footer>Mission Academy &bull; 2nd Grade &bull; All missions powered by learning</footer>
+</body>
+</html>

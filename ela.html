@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ELA Missions — Mission Academy</title>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body class="ela-theme">
+
+<!-- NAV -->
+<nav class="top-nav">
+  <a href="index.html" class="nav-logo">🚀 Mission <span>Academy</span></a>
+  <div class="nav-tabs">
+    <a href="math.html" class="nav-tab">➕ Math</a>
+    <a href="ela.html" class="nav-tab active-ela">📖 ELA</a>
+  </div>
+</nav>
+
+<!-- PAGE HEADER -->
+<div class="page-header">
+  <div class="page-eyebrow ela-accent">2nd Grade · 60 Missions</div>
+  <h1 class="page-title">ELA Missions</h1>
+  <p class="page-subtitle">Master words, sentences, and grammar — one mission at a time!</p>
+</div>
+
+<!-- MISSION GRID -->
+<div class="missions-grid" id="missionsGrid"></div>
+
+<!-- LOCK MODAL -->
+<div class="modal-overlay hidden" id="lockModal">
+  <div class="modal-box">
+    <button class="q-close-btn" onclick="closeLockModal()">✕</button>
+    <div class="lock-icon">🔒</div>
+    <h2 class="lock-title">Mission Locked</h2>
+    <p class="lock-desc">This is a checkpoint mission! Ask your teacher for the unlock code to continue.</p>
+    <input class="lock-input" id="lockInput" type="password" placeholder="Enter code" maxlength="12">
+    <div class="lock-error" id="lockError"></div>
+    <button class="lock-submit" onclick="submitLockCode()">Unlock Mission</button>
+    <button class="lock-cancel" onclick="closeLockModal()">Go back</button>
+  </div>
+</div>
+
+<!-- QUESTION MODAL -->
+<div class="modal-overlay hidden" id="questionModal">
+  <div class="modal-box">
+    <button class="q-close-btn" onclick="closeQuestionModal()">✕</button>
+    <div class="q-header">
+      <div>
+        <div class="q-mission-label ela-accent" id="qMissionLabel"></div>
+        <div class="q-number" id="qNumber"></div>
+      </div>
+      <div class="q-progress-bar">
+        <div class="q-progress-fill" id="qProgressFill" style="width:0%"></div>
+      </div>
+    </div>
+    <div class="q-text" id="qText"></div>
+    <div id="qAnswerArea"></div>
+    <div class="q-feedback" id="qFeedback"></div>
+    <div id="qActionArea"></div>
+  </div>
+</div>
+
+<!-- RESULT MODAL -->
+<div class="modal-overlay hidden" id="resultModal">
+  <div class="modal-box">
+    <div class="result-emoji" id="resultEmoji"></div>
+    <div class="result-title" id="resultTitle"></div>
+    <div class="result-score" id="resultScore"></div>
+    <div class="result-subtitle" id="resultSubtitle"></div>
+    <div class="result-btns">
+      <button class="result-btn primary" onclick="retryMission()">Try Again</button>
+      <button class="result-btn secondary" onclick="closeResultModal()">Mission List</button>
+    </div>
+  </div>
+</div>
+
+<script src="engine.js"></script>
+<script>
+const SUBJECT = 'ela';
+const TOTAL_MISSIONS = 60;
+let currentMission = null;
+let questions = [];
+let qIndex = 0;
+let score = 0;
+let answered = false;
+let pendingLockMission = null;
+
+function buildGrid() {
+  const grid = document.getElementById('missionsGrid');
+  grid.innerHTML = '';
+  const ME = window.MissionEngine;
+
+  const sections = [
+    { from: 1,  to: 5,  label: 'Missions 1–5 · Common, Proper, Singular & Plural Nouns' },
+    { from: 6,  to: 11, label: 'Missions 6–11 · Possessive & Irregular Plural Nouns' },
+    { from: 12, to: 15, label: 'Missions 12–15 · Pronouns, Reflexive Pronouns, Subject & Predicate' },
+    { from: 16, to: 20, label: 'Missions 16–20 · Action Verbs & Verb Tense' },
+    { from: 21, to: 25, label: 'Missions 21–25 · Subject–Verb Agreement' },
+    { from: 26, to: 30, label: 'Missions 26–30 · Adjectives, Adverbs & Comparatives' },
+    { from: 31, to: 35, label: 'Missions 31–35 · Statements, Questions, Commands & Exclamations' },
+    { from: 36, to: 40, label: 'Missions 36–40 · ELA Review I' },
+    { from: 41, to: 45, label: 'Missions 41–45 · Contractions' },
+    { from: 46, to: 50, label: 'Missions 46–50 · Compound Words, Prefixes & Suffixes' },
+    { from: 51, to: 55, label: 'Missions 51–55 · Synonyms & Antonyms' },
+    { from: 56, to: 60, label: 'Missions 56–60 · ELA Review II' },
+  ];
+
+  for (const section of sections) {
+    const div = document.createElement('div');
+    div.className = 'section-label';
+    div.innerHTML = `<span>${section.label}</span>`;
+    grid.appendChild(div);
+
+    for (let n = section.from; n <= section.to; n++) {
+      const locked = ME.isLocked(n) && !ME.isUnlocked(n, SUBJECT);
+      const best = ME.getBest(n, SUBJECT);
+      const btn = document.createElement('button');
+      btn.className = 'mission-btn' + (locked ? ' locked' : '') + (best !== null ? ' completed' : '');
+      btn.innerHTML = `
+        <div class="mission-number">Mission ${n}</div>
+        <div class="mission-name">${ME.elaMissionInfo[n]}</div>
+        ${best !== null ? `<div class="mission-score${best < 14 ? ' low' : ''}">Best: ${best}/20</div>` : ''}
+      `;
+      btn.addEventListener('click', () => clickMission(n, locked));
+      grid.appendChild(btn);
+    }
+  }
+}
+
+function clickMission(n, locked) {
+  if (locked) {
+    pendingLockMission = n;
+    document.getElementById('lockInput').value = '';
+    document.getElementById('lockError').textContent = '';
+    document.getElementById('lockModal').classList.remove('hidden');
+    document.getElementById('lockInput').focus();
+  } else {
+    startMission(n);
+  }
+}
+
+function closeLockModal() {
+  document.getElementById('lockModal').classList.add('hidden');
+  pendingLockMission = null;
+}
+
+function submitLockCode() {
+  const code = document.getElementById('lockInput').value.trim().toUpperCase();
+  if (window.MissionEngine.unlockMission(pendingLockMission, SUBJECT, code)) {
+    closeLockModal();
+    buildGrid();
+    startMission(pendingLockMission);
+  } else {
+    document.getElementById('lockError').textContent = 'That code is not correct. Ask your teacher!';
+    document.getElementById('lockInput').classList.add('error');
+    setTimeout(() => document.getElementById('lockInput').classList.remove('error'), 1200);
+  }
+}
+document.getElementById('lockInput').addEventListener('keydown', e => {
+  if (e.key === 'Enter') submitLockCode();
+});
+
+function startMission(n) {
+  const ME = window.MissionEngine;
+  currentMission = n;
+  const gen = ME.elaGenerators[n];
+  if (!gen) { alert('Mission coming soon!'); return; }
+  questions = ME.shuffle(gen());
+  qIndex = 0;
+  score = 0;
+  document.getElementById('qMissionLabel').textContent = `Mission ${n} — ELA`;
+  document.getElementById('questionModal').classList.remove('hidden');
+  showQuestion();
+}
+
+function showQuestion() {
+  const q = questions[qIndex];
+  answered = false;
+
+  document.getElementById('qNumber').textContent = `Question ${qIndex + 1} of ${questions.length}`;
+  document.getElementById('qProgressFill').style.width = `${(qIndex / questions.length) * 100}%`;
+  document.getElementById('qText').textContent = q.q;
+  document.getElementById('qFeedback').textContent = '';
+  document.getElementById('qFeedback').className = 'q-feedback';
+
+  const answerArea = document.getElementById('qAnswerArea');
+  const actionArea = document.getElementById('qActionArea');
+
+  if (q.type === 'choice') {
+    const safify = s => s.replace(/'/g, "\\'");
+    answerArea.innerHTML = `<div class="q-choices">${q.choices.map(c =>
+      `<button class="q-choice-btn" onclick="checkChoice(this,'${safify(c)}','${safify(q.answer)}')">${c}</button>`
+    ).join('')}</div>`;
+    actionArea.innerHTML = '';
+  } else {
+    answerArea.innerHTML = `
+      <div class="q-input-row">
+        <input class="q-input" id="answerInput" type="text" placeholder="Type your answer…" autocomplete="off">
+        <button class="q-submit-btn" onclick="checkInput()">Check</button>
+      </div>`;
+    actionArea.innerHTML = '';
+    setTimeout(() => {
+      const inp = document.getElementById('answerInput');
+      if (inp) {
+        inp.focus();
+        inp.addEventListener('keydown', e => { if (e.key === 'Enter' && !answered) checkInput(); });
+      }
+    }, 50);
+  }
+}
+
+function checkChoice(btn, chosen, correct) {
+  if (answered) return;
+  answered = true;
+  const allBtns = btn.closest('.q-choices').querySelectorAll('.q-choice-btn');
+  allBtns.forEach(b => b.disabled = true);
+  const nc = chosen.trim().toLowerCase(), na = correct.trim().toLowerCase();
+  if (nc === na) {
+    btn.classList.add('correct');
+    score++;
+    showFeedback(true, correct);
+  } else {
+    btn.classList.add('wrong');
+    allBtns.forEach(b => { if (b.textContent.trim().toLowerCase() === na) b.classList.add('correct'); });
+    showFeedback(false, correct);
+  }
+  showNext();
+}
+
+function checkInput() {
+  if (answered) return;
+  const inp = document.getElementById('answerInput');
+  if (!inp) return;
+  const val = inp.value.trim().toLowerCase();
+  const correct = questions[qIndex].answer.trim().toLowerCase();
+  answered = true;
+  inp.disabled = true;
+  if (val === correct) {
+    inp.classList.add('correct');
+    score++;
+    showFeedback(true, questions[qIndex].answer);
+  } else {
+    inp.classList.add('wrong');
+    showFeedback(false, questions[qIndex].answer);
+  }
+  showNext();
+}
+
+function showFeedback(correct, answer) {
+  const fb = document.getElementById('qFeedback');
+  fb.className = 'q-feedback ' + (correct ? 'correct' : 'wrong');
+  fb.textContent = correct ? '✓ Correct!' : `✗ The answer is: ${answer}`;
+}
+
+function showNext() {
+  const actionArea = document.getElementById('qActionArea');
+  const isLast = qIndex + 1 >= questions.length;
+  actionArea.innerHTML = `<button class="q-next-btn" onclick="${isLast ? 'finishMission' : 'nextQuestion'}()">${isLast ? '🏁 See Results' : 'Next Question →'}</button>`;
+}
+
+function nextQuestion() { qIndex++; showQuestion(); }
+
+function closeQuestionModal() {
+  document.getElementById('questionModal').classList.add('hidden');
+  currentMission = null;
+}
+
+function finishMission() {
+  document.getElementById('questionModal').classList.add('hidden');
+  window.MissionEngine.markComplete(currentMission, SUBJECT, score);
+  buildGrid();
+
+  const pct = Math.round((score / questions.length) * 100);
+  const emoji = pct === 100 ? '🏆' : pct >= 80 ? '🌟' : pct >= 60 ? '👍' : '💪';
+  const title = pct === 100 ? 'Perfect Score!' : pct >= 80 ? 'Great Work!' : pct >= 60 ? 'Good Job!' : 'Keep Practicing!';
+
+  document.getElementById('resultEmoji').textContent = emoji;
+  document.getElementById('resultTitle').textContent = title;
+  document.getElementById('resultScore').textContent = `${score} / ${questions.length}`;
+  document.getElementById('resultSubtitle').textContent = `That's ${pct}% — Mission ${currentMission} complete!`;
+  document.getElementById('resultModal').classList.remove('hidden');
+}
+
+function retryMission() {
+  document.getElementById('resultModal').classList.add('hidden');
+  startMission(currentMission);
+}
+
+function closeResultModal() {
+  document.getElementById('resultModal').classList.add('hidden');
+  currentMission = null;
+}
+
+buildGrid();
+</script>
+</body>
+</html>
