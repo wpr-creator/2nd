@@ -6,83 +6,89 @@
 <title>Teacher Dashboard — Mission Academy</title>
 <link rel="stylesheet" href="styles.css">
 <style>
-  .dash-header { position:relative;z-index:1; padding:48px 28px 28px; max-width:1100px; margin:0 auto; }
-  .dash-title { font-family:'Space Grotesk',sans-serif; font-size:clamp(1.8rem,4vw,2.6rem); font-weight:700; margin-bottom:6px; }
-  .dash-sub { color:var(--soft); font-size:0.95rem; }
+  .dash-header{position:relative;z-index:1;padding:48px 28px 20px;max-width:1200px;margin:0 auto;}
+  .dash-title{font-family:'Space Grotesk',sans-serif;font-size:clamp(1.8rem,4vw,2.6rem);font-weight:700;margin-bottom:6px;}
+  .dash-sub{color:var(--soft);font-size:0.9rem;}
 
   /* Gate */
-  .dash-gate { position:relative;z-index:1; max-width:440px; margin:60px auto; padding:0 24px; text-align:center; }
-  .dash-gate-box { background:var(--panel); border:1px solid rgba(255,255,255,0.1); border-radius:20px; padding:44px 36px; }
-  .dash-gate-icon { font-size:3rem; margin-bottom:16px; }
-  .dash-gate-box h2 { font-family:'Space Grotesk',sans-serif; font-size:1.6rem; font-weight:700; margin-bottom:8px; }
-  .dash-gate-box p { color:var(--soft); margin-bottom:24px; font-size:0.9rem; }
-  .dash-gate-input {
-    width:100%; background:rgba(255,255,255,0.06); border:1.5px solid rgba(255,255,255,0.15);
-    border-radius:10px; padding:14px; color:var(--white); font-family:'Space Grotesk',sans-serif;
-    font-size:1rem; text-align:center; letter-spacing:3px; outline:none; margin-bottom:12px;
-  }
-  .dash-gate-input:focus { border-color:var(--gold); }
-  .dash-gate-btn {
-    width:100%; background:var(--gold); color:var(--ink); border:none; border-radius:10px;
-    padding:14px; font-family:'Space Grotesk',sans-serif; font-weight:700; font-size:0.95rem; cursor:pointer;
-  }
-  .dash-gate-error { color:var(--danger); font-size:0.85rem; margin-top:8px; }
+  .dash-gate{position:relative;z-index:1;max-width:440px;margin:60px auto;padding:0 24px;}
+  .dash-gate-box{background:var(--panel);border:1px solid rgba(255,255,255,0.1);border-radius:20px;padding:44px 36px;text-align:center;}
+  .dash-gate-icon{font-size:3rem;margin-bottom:16px;}
+  .dash-gate-box h2{font-family:'Space Grotesk',sans-serif;font-size:1.6rem;font-weight:700;margin-bottom:8px;}
+  .dash-gate-box p{color:var(--soft);margin-bottom:24px;font-size:0.9rem;}
+  .dash-gate-input{width:100%;background:rgba(255,255,255,0.06);border:1.5px solid rgba(255,255,255,0.15);border-radius:10px;padding:14px;color:var(--white);font-family:'Space Grotesk',sans-serif;font-size:1rem;text-align:center;letter-spacing:3px;outline:none;margin-bottom:12px;}
+  .dash-gate-input:focus{border-color:var(--gold);}
+  .dash-gate-btn{width:100%;background:var(--gold);color:var(--ink);border:none;border-radius:10px;padding:14px;font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:0.95rem;cursor:pointer;}
+  .dash-gate-error{color:var(--danger);font-size:0.85rem;margin-top:8px;}
 
-  /* Dashboard content */
-  .dash-content { position:relative;z-index:1; max-width:1100px; margin:0 auto; padding:0 28px 80px; }
-  .dash-content.hidden { display:none; }
+  /* Content */
+  .dash-content{position:relative;z-index:1;max-width:1200px;margin:0 auto;padding:0 28px 80px;}
+  .dash-content.hidden{display:none;}
 
-  /* Student selector */
-  .student-tabs { display:flex; gap:8px; flex-wrap:wrap; margin-bottom:28px; }
-  .student-tab {
-    padding:8px 18px; border-radius:100px; border:1px solid rgba(255,255,255,0.12);
-    background:transparent; color:var(--soft); font-family:'Space Grotesk',sans-serif;
-    font-size:0.85rem; font-weight:600; cursor:pointer; transition:all 0.15s;
-  }
-  .student-tab:hover { color:var(--white); border-color:rgba(255,255,255,0.3); }
-  .student-tab.active { background:var(--gold); color:var(--ink); border-color:var(--gold); }
-  .no-students { color:var(--soft); font-size:0.95rem; padding:40px 0; }
+  /* Zone tabs */
+  .zone-tabs{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:24px;}
+  .zone-tab{padding:8px 18px;border-radius:100px;border:1px solid rgba(255,255,255,0.12);background:transparent;color:var(--soft);font-family:'Space Grotesk',sans-serif;font-size:0.82rem;font-weight:600;cursor:pointer;transition:all 0.15s;}
+  .zone-tab:hover{color:var(--white);border-color:rgba(255,255,255,0.3);}
+  .zone-tab.active{background:var(--gold);color:var(--ink);border-color:var(--gold);}
 
-  /* Summary cards */
-  .summary-row { display:grid; grid-template-columns:repeat(auto-fill,minmax(160px,1fr)); gap:14px; margin-bottom:32px; }
-  .summary-card { background:var(--panel); border:1px solid rgba(255,255,255,0.07); border-radius:14px; padding:20px; }
-  .summary-val { font-family:'Space Grotesk',sans-serif; font-size:2rem; font-weight:700; color:var(--gold); }
-  .summary-lbl { color:var(--soft); font-size:0.8rem; margin-top:4px; }
+  /* Student tabs */
+  .student-tabs{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:24px;}
+  .student-tab{padding:7px 16px;border-radius:100px;border:1px solid rgba(255,255,255,0.1);background:transparent;color:var(--soft);font-family:'Space Grotesk',sans-serif;font-size:0.82rem;font-weight:600;cursor:pointer;transition:all 0.15s;}
+  .student-tab:hover{color:var(--white);}
+  .student-tab.active{background:rgba(255,255,255,0.1);color:var(--white);border-color:rgba(255,255,255,0.3);}
+  .no-students{color:var(--soft);font-size:0.95rem;padding:40px 0;}
+
+  /* Summary row */
+  .summary-row{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:12px;margin-bottom:28px;}
+  .summary-card{background:var(--panel);border:1px solid rgba(255,255,255,0.07);border-radius:14px;padding:16px;}
+  .summary-val{font-family:'Space Grotesk',sans-serif;font-size:1.8rem;font-weight:700;color:var(--gold);}
+  .summary-lbl{color:var(--soft);font-size:0.75rem;margin-top:4px;}
+  .summary-card.alert{border-color:rgba(255,107,107,0.3);}
+  .summary-card.alert .summary-val{color:var(--danger);}
+
+  /* Class overview table */
+  .class-table{width:100%;border-collapse:collapse;margin-bottom:40px;}
+  .class-table th{font-family:'Space Grotesk',sans-serif;font-size:0.72rem;font-weight:600;letter-spacing:1px;text-transform:uppercase;color:var(--dim);padding:8px 12px;text-align:left;border-bottom:1px solid rgba(255,255,255,0.07);white-space:nowrap;}
+  .class-table td{padding:8px 12px;border-bottom:1px solid rgba(255,255,255,0.04);font-size:0.88rem;color:var(--soft);}
+  .class-table td:first-child{color:var(--white);font-weight:600;}
+  .class-table tr:hover td{background:rgba(255,255,255,0.02);}
+
+  /* Subject blocks */
+  .subject-block{margin-bottom:36px;}
+  .subject-block-title{font-family:'Space Grotesk',sans-serif;font-size:0.72rem;font-weight:600;letter-spacing:2px;text-transform:uppercase;color:var(--dim);margin-bottom:12px;display:flex;align-items:center;gap:12px;}
+  .subject-block-title::after{content:'';flex:1;height:1px;background:rgba(255,255,255,0.07);}
 
   /* Mission table */
-  .subject-block { margin-bottom:40px; }
-  .subject-block-title { font-family:'Space Grotesk',sans-serif; font-size:0.75rem; font-weight:600; letter-spacing:2.5px; text-transform:uppercase; color:var(--dim); margin-bottom:14px; display:flex; align-items:center; gap:12px; }
-  .subject-block-title::after { content:''; flex:1; height:1px; background:rgba(255,255,255,0.07); }
-  .mission-table { width:100%; border-collapse:collapse; }
-  .mission-table th { font-family:'Space Grotesk',sans-serif; font-size:0.75rem; font-weight:600; letter-spacing:1px; text-transform:uppercase; color:var(--dim); padding:8px 12px; text-align:left; border-bottom:1px solid rgba(255,255,255,0.07); }
-  .mission-table td { padding:8px 12px; border-bottom:1px solid rgba(255,255,255,0.04); font-size:0.9rem; color:var(--soft); }
-  .mission-table td:first-child { color:var(--white); font-weight:500; }
-  .score-chip {
-    display:inline-block; padding:3px 10px; border-radius:100px; font-family:'Space Grotesk',sans-serif;
-    font-size:0.78rem; font-weight:700;
-  }
-  .score-chip.perfect { background:rgba(245,166,35,0.2); color:var(--gold); }
-  .score-chip.good    { background:rgba(86,207,138,0.15); color:var(--success); }
-  .score-chip.ok      { background:rgba(78,205,196,0.15); color:var(--mint); }
-  .score-chip.low     { background:rgba(255,107,107,0.15); color:var(--danger); }
-  .score-chip.none    { background:rgba(255,255,255,0.05); color:var(--dim); }
+  .mission-table{width:100%;border-collapse:collapse;}
+  .mission-table th{font-family:'Space Grotesk',sans-serif;font-size:0.72rem;font-weight:600;letter-spacing:1px;text-transform:uppercase;color:var(--dim);padding:7px 10px;text-align:left;border-bottom:1px solid rgba(255,255,255,0.07);}
+  .mission-table td{padding:7px 10px;border-bottom:1px solid rgba(255,255,255,0.04);font-size:0.86rem;color:var(--soft);}
+  .mission-table td:first-child{color:var(--white);font-weight:500;}
 
-  /* Print */
-  .print-btn {
-    background:rgba(255,255,255,0.07); border:1px solid rgba(255,255,255,0.15); border-radius:10px;
-    padding:10px 20px; color:var(--white); font-family:'Space Grotesk',sans-serif; font-weight:600;
-    font-size:0.85rem; cursor:pointer; margin-bottom:28px; transition:background 0.15s;
-  }
-  .print-btn:hover { background:rgba(255,255,255,0.12); }
+  /* Score chips */
+  .score-chip{display:inline-block;padding:2px 9px;border-radius:100px;font-family:'Space Grotesk',sans-serif;font-size:0.74rem;font-weight:700;}
+  .score-chip.perfect{background:rgba(245,166,35,0.2);color:var(--gold);}
+  .score-chip.good{background:rgba(86,207,138,0.15);color:var(--success);}
+  .score-chip.ok{background:rgba(78,205,196,0.15);color:var(--mint);}
+  .score-chip.low{background:rgba(255,107,107,0.2);color:var(--danger);}
+  .score-chip.none{background:rgba(255,255,255,0.05);color:var(--dim);}
+  .needs-review{color:var(--danger);font-size:0.72rem;font-weight:700;margin-left:4px;}
+
+  /* Toolbar */
+  .dash-toolbar{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:20px;align-items:center;}
+  .print-btn{background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.15);border-radius:10px;padding:9px 18px;color:var(--white);font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:0.82rem;cursor:pointer;transition:background 0.15s;}
+  .print-btn:hover{background:rgba(255,255,255,0.12);}
+  .view-toggle{display:flex;gap:6px;}
+  .view-btn{background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:8px;padding:8px 14px;color:var(--soft);font-family:'Space Grotesk',sans-serif;font-size:0.8rem;font-weight:600;cursor:pointer;transition:all 0.15s;}
+  .view-btn.active{background:rgba(255,255,255,0.12);color:var(--white);border-color:rgba(255,255,255,0.25);}
 
   @media print {
-    body { background:#fff!important; color:#000!important; }
-    body::before { display:none; }
-    .top-nav, .dash-gate, .print-btn, .student-tabs { display:none!important; }
-    .dash-content { padding:0!important; }
-    .mission-table td, .mission-table th { color:#000!important; border-color:#ddd!important; }
-    .summary-card { border:1px solid #ddd!important; background:#f9f9f9!important; }
-    .summary-val, .summary-lbl { color:#333!important; }
+    body{background:#fff!important;color:#000!important;}
+    body::before{display:none;}
+    .top-nav,.dash-gate,.print-btn,.student-tabs,.zone-tabs,.dash-toolbar,.view-toggle{display:none!important;}
+    .mission-table td,.mission-table th,.class-table td,.class-table th{color:#000!important;border-color:#ddd!important;}
+    .summary-card{border:1px solid #ddd!important;background:#f9f9f9!important;}
+    .summary-val,.summary-lbl{color:#333!important;}
+    .score-chip{border:1px solid #ccc;}
   }
 </style>
 </head>
@@ -91,8 +97,10 @@
 <nav class="top-nav">
   <a href="index.html" class="nav-logo">🚀 Mission <span>Academy</span></a>
   <div class="nav-tabs">
-    <a href="math.html" class="nav-tab">➕ Math</a>
-    <a href="ela.html"  class="nav-tab">📖 ELA</a>
+    <a href="math.html"    class="nav-tab">➕ Math</a>
+    <a href="ela.html"     class="nav-tab">📖 ELA</a>
+    <a href="reading.html" class="nav-tab">📚 Reading</a>
+    <a href="spelling.html" class="nav-tab">🔤 Spelling</a>
   </div>
 </nav>
 
@@ -102,7 +110,7 @@
     <div class="dash-gate-box">
       <div class="dash-gate-icon">📊</div>
       <h2>Teacher Dashboard</h2>
-      <p>Enter the teacher code to view student progress reports.</p>
+      <p>Enter the teacher code to view all student progress across all four zones.</p>
       <input class="dash-gate-input" id="gateInput" type="password" placeholder="Teacher code" maxlength="20">
       <button class="dash-gate-btn" onclick="checkGate()">View Dashboard</button>
       <div class="dash-gate-error" id="gateError"></div>
@@ -110,133 +118,193 @@
   </div>
 </div>
 
-<!-- Dashboard content -->
+<!-- Dashboard -->
 <div class="dash-content hidden" id="dashContent">
   <div class="dash-header">
     <div class="page-eyebrow" style="color:var(--gold)">Teacher Dashboard</div>
     <div class="dash-title">Student Progress</div>
-    <p class="dash-sub">All progress data stored locally in this browser.</p>
+    <p class="dash-sub">All progress stored locally in this browser session.</p>
   </div>
 
-  <div style="position:relative;z-index:1;max-width:1100px;margin:0 auto;padding:0 28px;">
-    <button class="print-btn" onclick="window.print()">🖨️ Print This Report</button>
+  <div style="position:relative;z-index:1;max-width:1200px;margin:0 auto;padding:0 28px 16px;">
+    <div class="dash-toolbar">
+      <button class="print-btn" onclick="window.print()">🖨️ Print Report</button>
+      <div class="view-toggle">
+        <button class="view-btn active" id="btnClassView" onclick="setView('class')">Class Overview</button>
+        <button class="view-btn" id="btnStudentView" onclick="setView('student')">Student Detail</button>
+      </div>
+    </div>
     <div class="student-tabs" id="studentTabs"></div>
-    <div id="noStudents" class="no-students hidden">No student data found yet. Students need to use this browser to create progress records.</div>
+    <div id="noStudents" class="no-students hidden">No student data found yet. Students need to log in from this browser to appear here.</div>
   </div>
 
-  <div class="dash-content" id="studentReport" style="padding-top:0;"></div>
+  <div class="dash-content" id="reportArea" style="padding-top:0;"></div>
 </div>
 
 <script src="engine.js"></script>
 <script>
-const ME = window.MissionEngine;
-let allStudents = {};
-let activeStudent = null;
+const ME=window.MissionEngine;
+let allStudents={}, currentView='class', activeStudent=null;
 
-document.getElementById('gateInput').addEventListener('keydown', e => { if(e.key==='Enter') checkGate(); });
+document.getElementById('gateInput').addEventListener('keydown',e=>{if(e.key==='Enter')checkGate();});
 
-function checkGate() {
-  const code = document.getElementById('gateInput').value.trim().toUpperCase();
-  if (code === ME.TEACHER_CODE) {
+function checkGate(){
+  const code=document.getElementById('gateInput').value.trim().toUpperCase();
+  if(code===ME.TEACHER_CODE){
     document.getElementById('gateSection').classList.add('hidden');
     document.getElementById('dashContent').classList.remove('hidden');
     loadDashboard();
   } else {
-    document.getElementById('gateError').textContent = 'Incorrect code.';
+    document.getElementById('gateError').textContent='Incorrect code.';
   }
 }
 
-function loadDashboard() {
-  allStudents = ME.getAllStudentProgress();
-  const names = Object.keys(allStudents);
-  const tabsEl = document.getElementById('studentTabs');
-  const noEl = document.getElementById('noStudents');
-
-  if (names.length === 0) { noEl.classList.remove('hidden'); return; }
-
-  tabsEl.innerHTML = names.map(n =>
-    `<button class="student-tab" onclick="selectStudent('${n.replace(/'/g,"\\'")}', this)">${n.replace(/_/g,' ')}</button>`
-  ).join('');
-
-  // auto-select first
-  const firstBtn = tabsEl.querySelector('.student-tab');
-  if (firstBtn) { firstBtn.classList.add('active'); selectStudent(names[0]); }
+function loadDashboard(){
+  allStudents=ME.getAllStudentProgress();
+  const names=Object.keys(allStudents);
+  const tabsEl=document.getElementById('studentTabs');
+  if(names.length===0){ document.getElementById('noStudents').classList.remove('hidden'); return; }
+  tabsEl.innerHTML=names.map(n=>`<button class="student-tab" onclick="selectStudent('${n.replace(/'/g,"\\'")}',this)">${n.replace(/_/g,' ')}</button>`).join('');
+  renderClassOverview();
 }
 
-function selectStudent(rawName, btn) {
-  if (btn) {
-    document.querySelectorAll('.student-tab').forEach(b=>b.classList.remove('active'));
-    btn.classList.add('active');
+function setView(v){
+  currentView=v;
+  document.getElementById('btnClassView').className='view-btn'+(v==='class'?' active':'');
+  document.getElementById('btnStudentView').className='view-btn'+(v==='student'?' active':'');
+  if(v==='class') renderClassOverview();
+  else if(activeStudent) renderStudentDetail(activeStudent);
+  else {
+    const first=Object.keys(allStudents)[0];
+    if(first){ activeStudent=first; renderStudentDetail(first); }
   }
-  activeStudent = rawName;
-  renderReport(rawName);
 }
 
-function scoreChip(best, total=20) {
-  if (best === null) return `<span class="score-chip none">—</span>`;
-  const pct = (best/total)*100;
-  const cls = pct===100?'perfect':pct>=80?'good':pct>=60?'ok':'low';
-  return `<span class="score-chip ${cls}">${best}/${total}</span>`;
+function selectStudent(name,btn){
+  document.querySelectorAll('.student-tab').forEach(b=>b.classList.remove('active'));
+  if(btn) btn.classList.add('active');
+  activeStudent=name;
+  if(currentView==='student') renderStudentDetail(name);
+  else { setView('student'); }
 }
 
-function renderReport(rawName) {
-  const data = allStudents[rawName] || {};
-  const mathP = data.math || {};
-  const elaP  = data.ela  || {};
-  const displayName = rawName.replace(/_/g,' ');
+function chip(best,perfect){
+  if(best===null) return `<span class="score-chip none">—</span>`;
+  const pct=(best/perfect)*100;
+  const cls=pct===100?'perfect':pct>=80?'good':pct>=60?'ok':'low';
+  const flag=pct<70&&best!==null?`<span class="needs-review">⚠</span>`:'';
+  return `<span class="score-chip ${cls}">${best}/${perfect}</span>${flag}`;
+}
 
-  function countDone(p, total) { let n=0; for(let i=1;i<=total;i++) if(p[`best_${i}`]!=null) n++; return n; }
-  function countPerf(p, total) { let n=0; for(let i=1;i<=total;i++) if(p[`best_${i}`]===20) n++; return n; }
-  function avgScore(p, total) {
-    let s=0,c=0; for(let i=1;i<=total;i++) if(p[`best_${i}`]!=null){s+=p[`best_${i}`];c++;} return c?Math.round((s/c/20)*100):0;
-  }
+function countDone(p,total){ let n=0; for(let i=1;i<=total;i++) if(p[`best_${i}`]!=null) n++; return n; }
+function avgPct(p,total,perf){ let s=0,c=0; for(let i=1;i<=total;i++) if(p[`best_${i}`]!=null){s+=p[`best_${i}`];c++;} return c?Math.round((s/c/perf)*100):0; }
+function needsReviewCount(p,total,perf){ let n=0; for(let i=1;i<=total;i++){ const b=p[`best_${i}`]; if(b!=null&&(b/perf)<0.7) n++; } return n; }
+
+// ── Class Overview ──────────────────────────────────────────────────────────
+function renderClassOverview(){
+  const names=Object.keys(allStudents);
+  if(!names.length){ document.getElementById('reportArea').innerHTML=''; return; }
+
+  const rows=names.map(n=>{
+    const d=allStudents[n];
+    const mathD=countDone(d.math||{},30), elaD=countDone(d.ela||{},60);
+    const readD=countDone(d.reading||{},20), spellD=countDone(d.spelling||{},20);
+    const total=mathD+elaD+readD+spellD;
+    const mathA=avgPct(d.math||{},30,20), elaA=avgPct(d.ela||{},60,20);
+    const readA=avgPct(d.reading||{},20,5), spellA=avgPct(d.spelling||{},20,10);
+    const nr=needsReviewCount(d.math||{},30,20)+needsReviewCount(d.ela||{},60,20)+needsReviewCount(d.reading||{},20,5)+needsReviewCount(d.spelling||{},20,10);
+    return `<tr>
+      <td><button class="student-tab" onclick="selectStudent('${n.replace(/'/g,"\\'")}',null);setView('student')" style="border:none;background:none;color:var(--white);font-weight:600;cursor:pointer;font-family:'Space Grotesk',sans-serif;padding:0;">${n.replace(/_/g,' ')}</button></td>
+      <td>${total} <span style="color:var(--dim);font-size:0.75rem;">/ 130</span></td>
+      <td>${mathD}/30 <span style="color:var(--soft);font-size:0.75rem;">(${mathA}%)</span></td>
+      <td>${elaD}/60 <span style="color:var(--soft);font-size:0.75rem;">(${elaA}%)</span></td>
+      <td>${readD}/20 <span style="color:var(--soft);font-size:0.75rem;">(${readA}%)</span></td>
+      <td>${spellD}/20 <span style="color:var(--soft);font-size:0.75rem;">(${spellA}%)</span></td>
+      <td>${nr>0?`<span style="color:var(--danger);font-weight:700;">${nr} ⚠</span>`:'<span style="color:var(--success);">✓</span>'}</td>
+    </tr>`;
+  }).join('');
+
+  document.getElementById('reportArea').innerHTML=`
+    <div style="max-width:1200px;margin:0 auto;padding:0 28px 80px;">
+      <div style="font-family:'Space Grotesk',sans-serif;font-size:1rem;font-weight:600;color:var(--soft);margin-bottom:16px;">${names.length} student${names.length!==1?'s':''} on this device · ⚠ = below 70%</div>
+      <table class="class-table">
+        <thead><tr>
+          <th>Student</th><th>Total Done</th>
+          <th>➕ Math</th><th>📖 ELA</th><th>📚 Reading</th><th>🔤 Spelling</th>
+          <th>Needs Review</th>
+        </tr></thead>
+        <tbody>${rows}</tbody>
+      </table>
+      <div style="color:var(--soft);font-size:0.8rem;margin-top:-20px;">Click a student name to see their full detail report.</div>
+    </div>`;
+}
+
+// ── Student Detail ──────────────────────────────────────────────────────────
+function renderStudentDetail(rawName){
+  const data=allStudents[rawName]||{};
+  const mathP=data.math||{}, elaP=data.ela||{}, readP=data.reading||{}, spellP=data.spelling||{};
+  const display=rawName.replace(/_/g,' ');
 
   const mathDone=countDone(mathP,30), elaDone=countDone(elaP,60);
-  const mathPerf=countPerf(mathP,30), elaPerf=countPerf(elaP,60);
-  const mathAvg=avgScore(mathP,30), elaAvg=avgScore(elaP,60);
+  const readDone=countDone(readP,20), spellDone=countDone(spellP,20);
+  const mathNR=needsReviewCount(mathP,30,20), elaNR=needsReviewCount(elaP,60,20);
+  const readNR=needsReviewCount(readP,20,5), spellNR=needsReviewCount(spellP,20,10);
 
-  // Math table rows
-  const mathRows = ME.mathMissionInfo.slice(1).map((info,i)=>{
-    const n=i+1, best=mathP[`best_${n}`]??null;
-    return `<tr><td>Mission ${n}</td><td>${info}</td><td>${scoreChip(best)}</td></tr>`;
+  const mathRows=ME.mathMissionInfo.slice(1).map((info,i)=>{
+    const n=i+1,best=mathP[`best_${n}`]??null;
+    return `<tr><td>Mission ${n}</td><td>${info}</td><td>${chip(best,20)}</td></tr>`;
   }).join('');
 
-  // ELA table rows
-  const elaRows = ME.elaMissionInfo.slice(1).map((info,i)=>{
-    const n=i+1, best=elaP[`best_${n}`]??null;
-    return `<tr><td>Mission ${n}</td><td>${info}</td><td>${scoreChip(best)}</td></tr>`;
+  const elaRows=ME.elaMissionInfo.slice(1).map((info,i)=>{
+    const n=i+1,best=elaP[`best_${n}`]??null;
+    return `<tr><td>Mission ${n}</td><td>${info}</td><td>${chip(best,20)}</td></tr>`;
   }).join('');
 
-  document.getElementById('studentReport').innerHTML = `
-    <div style="max-width:1100px;margin:0 auto;padding:0 28px 80px;">
-      <div style="font-family:'Space Grotesk',sans-serif;font-size:1.4rem;font-weight:700;margin-bottom:20px;">${displayName}</div>
+  const readTitles=['The Little Seed','Max\'s Big Day','The Rainy Day','The New Kid','Butterflies','The Bake Sale','Penguins','Lost and Found','Community Helpers','The Missing Cupcake','Seasons','The Garden','Ocean Animals','A Kind Act','The Big Storm','Library Day','Stars and Planets','The Talent Show','Recycling','The Sleepover'];
+  const readRows=readTitles.map((title,i)=>{
+    const n=i+1,best=readP[`best_${n}`]??null;
+    return `<tr><td>Passage ${n}</td><td>${title}</td><td>${chip(best,5)}</td></tr>`;
+  }).join('');
+
+  const spellNames=['Short Vowel Words','Long Vowel Words','Blends & Digraphs','Double Letter Words','Word Families','Compound Words','Words Ending in -ing','Past Tense -ed Words','Sight Words Set 1','Sight Words Set 2','Animal Words','Nature Words','Food Words','School Words','Action Words','Comparing Words','Spelling Contractions','Tricky Words','Feelings Words','Challenge Words'];
+  const spellRows=spellNames.map((name,i)=>{
+    const n=i+1,best=spellP[`best_${n}`]??null;
+    return `<tr><td>Mission ${n}</td><td>${name}</td><td>${chip(best,10)}</td></tr>`;
+  }).join('');
+
+  document.getElementById('reportArea').innerHTML=`
+    <div style="max-width:1200px;margin:0 auto;padding:0 28px 80px;">
+      <div style="font-family:'Space Grotesk',sans-serif;font-size:1.4rem;font-weight:700;margin-bottom:20px;">${display}</div>
 
       <div class="summary-row">
-        <div class="summary-card"><div class="summary-val">${mathDone}/30</div><div class="summary-lbl">Math Missions Done</div></div>
-        <div class="summary-card"><div class="summary-val">${mathAvg}%</div><div class="summary-lbl">Math Avg Score</div></div>
-        <div class="summary-card"><div class="summary-val">${mathPerf}</div><div class="summary-lbl">Math Perfect Scores</div></div>
-        <div class="summary-card"><div class="summary-val">${elaDone}/60</div><div class="summary-lbl">ELA Missions Done</div></div>
-        <div class="summary-card"><div class="summary-val">${elaAvg}%</div><div class="summary-lbl">ELA Avg Score</div></div>
-        <div class="summary-card"><div class="summary-val">${elaPerf}</div><div class="summary-lbl">ELA Perfect Scores</div></div>
+        <div class="summary-card"><div class="summary-val">${mathDone}/30</div><div class="summary-lbl">Math Done</div></div>
+        <div class="summary-card ${mathNR>0?'alert':''}"><div class="summary-val">${mathNR}</div><div class="summary-lbl">Math Need Review</div></div>
+        <div class="summary-card"><div class="summary-val">${elaDone}/60</div><div class="summary-lbl">ELA Done</div></div>
+        <div class="summary-card ${elaNR>0?'alert':''}"><div class="summary-val">${elaNR}</div><div class="summary-lbl">ELA Need Review</div></div>
+        <div class="summary-card"><div class="summary-val">${readDone}/20</div><div class="summary-lbl">Reading Done</div></div>
+        <div class="summary-card ${readNR>0?'alert':''}"><div class="summary-val">${readNR}</div><div class="summary-lbl">Reading Need Review</div></div>
+        <div class="summary-card"><div class="summary-val">${spellDone}/20</div><div class="summary-lbl">Spelling Done</div></div>
+        <div class="summary-card ${spellNR>0?'alert':''}"><div class="summary-val">${spellNR}</div><div class="summary-lbl">Spelling Need Review</div></div>
       </div>
+      <div style="color:var(--soft);font-size:0.78rem;margin-bottom:24px;">⚠ = scored below 70% · shown in red</div>
 
       <div class="subject-block">
-        <div class="subject-block-title">Math Missions</div>
-        <table class="mission-table">
-          <thead><tr><th>Mission</th><th>Topic</th><th>Best Score</th></tr></thead>
-          <tbody>${mathRows}</tbody>
-        </table>
+        <div class="subject-block-title">➕ Math Missions</div>
+        <table class="mission-table"><thead><tr><th>Mission</th><th>Topic</th><th>Best Score</th></tr></thead><tbody>${mathRows}</tbody></table>
       </div>
-
       <div class="subject-block">
-        <div class="subject-block-title">ELA Missions</div>
-        <table class="mission-table">
-          <thead><tr><th>Mission</th><th>Topic</th><th>Best Score</th></tr></thead>
-          <tbody>${elaRows}</tbody>
-        </table>
+        <div class="subject-block-title">📖 ELA Missions</div>
+        <table class="mission-table"><thead><tr><th>Mission</th><th>Topic</th><th>Best Score</th></tr></thead><tbody>${elaRows}</tbody></table>
       </div>
-    </div>
-  `;
+      <div class="subject-block">
+        <div class="subject-block-title">📚 Reading Passages</div>
+        <table class="mission-table"><thead><tr><th>Passage</th><th>Title</th><th>Best Score</th></tr></thead><tbody>${readRows}</tbody></table>
+      </div>
+      <div class="subject-block">
+        <div class="subject-block-title">🔤 Spelling Missions</div>
+        <table class="mission-table"><thead><tr><th>Mission</th><th>Words</th><th>Best Score</th></tr></thead><tbody>${spellRows}</tbody></table>
+      </div>
+    </div>`;
 }
 </script>
 </body>

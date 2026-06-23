@@ -6,41 +6,49 @@
 <title>My Trophies — Mission Academy</title>
 <link rel="stylesheet" href="styles.css">
 <style>
-  .trophies-header { position:relative;z-index:1; text-align:center; padding:52px 20px 32px; }
-  .trophies-name { font-family:'Space Grotesk',sans-serif; font-size:clamp(1.8rem,4vw,2.8rem); font-weight:700; margin-bottom:8px; }
-  .trophies-name span { color:var(--gold); }
-  .trophies-sub { color:var(--soft); font-size:0.95rem; }
+  .trophies-header{position:relative;z-index:1;text-align:center;padding:52px 20px 32px;}
+  .trophies-name{font-family:'Space Grotesk',sans-serif;font-size:clamp(1.8rem,4vw,2.8rem);font-weight:700;margin-bottom:8px;}
+  .trophies-name span{color:var(--gold);}
+  .trophies-sub{color:var(--soft);font-size:0.95rem;}
 
-  .trophy-sections { position:relative;z-index:1; max-width:860px; margin:0 auto; padding:0 24px 80px; }
-  .trophy-section-title {
-    font-family:'Space Grotesk',sans-serif; font-size:0.75rem; font-weight:600; letter-spacing:2.5px;
-    text-transform:uppercase; color:var(--dim); margin:36px 0 16px;
-    display:flex; align-items:center; gap:12px;
+  .trophy-sections{position:relative;z-index:1;max-width:920px;margin:0 auto;padding:0 24px 80px;}
+  .trophy-section-title{
+    font-family:'Space Grotesk',sans-serif;font-size:0.75rem;font-weight:600;letter-spacing:2.5px;
+    text-transform:uppercase;color:var(--dim);margin:36px 0 16px;
+    display:flex;align-items:center;gap:12px;
   }
-  .trophy-section-title::after { content:''; flex:1; height:1px; background:rgba(255,255,255,0.07); }
+  .trophy-section-title::after{content:'';flex:1;height:1px;background:rgba(255,255,255,0.07);}
 
-  .trophies-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(160px,1fr)); gap:14px; }
+  .trophies-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px;}
 
-  .trophy-card {
-    background:var(--panel); border:1px solid rgba(255,255,255,0.07); border-radius:16px;
-    padding:20px 16px; text-align:center; transition:transform 0.2s;
+  .trophy-card{
+    background:var(--panel);border:1px solid rgba(255,255,255,0.07);border-radius:16px;
+    padding:18px 14px;text-align:center;transition:transform 0.2s;position:relative;
   }
-  .trophy-card.earned { border-color:rgba(245,166,35,0.35); background:rgba(245,166,35,0.05); }
-  .trophy-card.earned:hover { transform:translateY(-3px); }
-  .trophy-card.locked-trophy { opacity:0.3; filter:grayscale(1); }
-  .trophy-icon { font-size:2.4rem; margin-bottom:10px; line-height:1; }
-  .trophy-card-name { font-family:'Space Grotesk',sans-serif; font-size:0.85rem; font-weight:600; margin-bottom:4px; }
-  .trophy-card-desc { color:var(--soft); font-size:0.75rem; line-height:1.4; }
-  .trophy-card.earned .trophy-card-name { color:var(--gold); }
-
-  /* big stat bar */
-  .stat-bar { display:flex; gap:20px; max-width:860px; margin:0 auto 0; padding:0 24px; flex-wrap:wrap; }
-  .stat-pill {
-    flex:1; min-width:120px; background:var(--panel); border:1px solid rgba(255,255,255,0.07);
-    border-radius:14px; padding:20px; text-align:center;
+  .trophy-card.earned{border-color:rgba(245,166,35,0.35);background:rgba(245,166,35,0.05);}
+  .trophy-card.earned:hover{transform:translateY(-3px);}
+  .trophy-card.locked-trophy{opacity:0.28;filter:grayscale(1);}
+  .trophy-icon{font-size:2.2rem;margin-bottom:8px;line-height:1;}
+  .trophy-card-name{font-family:'Space Grotesk',sans-serif;font-size:0.82rem;font-weight:600;margin-bottom:4px;}
+  .trophy-card-desc{color:var(--soft);font-size:0.72rem;line-height:1.4;}
+  .trophy-card.earned .trophy-card-name{color:var(--gold);}
+  .new-badge{
+    position:absolute;top:-6px;right:-6px;background:var(--rose);color:#fff;
+    font-family:'Space Grotesk',sans-serif;font-size:0.6rem;font-weight:700;
+    padding:2px 7px;border-radius:100px;letter-spacing:0.5px;
   }
-  .stat-pill-val { font-family:'Space Grotesk',sans-serif; font-size:2rem; font-weight:700; color:var(--gold); }
-  .stat-pill-label { color:var(--soft); font-size:0.8rem; margin-top:4px; }
+
+  /* Big stat bar */
+  .stat-bar{display:flex;gap:14px;max-width:920px;margin:0 auto 0;padding:0 24px;flex-wrap:wrap;}
+  .stat-pill{flex:1;min-width:100px;background:var(--panel);border:1px solid rgba(255,255,255,0.07);border-radius:14px;padding:16px;text-align:center;}
+  .stat-pill-val{font-family:'Space Grotesk',sans-serif;font-size:1.8rem;font-weight:700;color:var(--gold);}
+  .stat-pill-label{color:var(--soft);font-size:0.75rem;margin-top:4px;}
+
+  /* Progress rings row */
+  .progress-rings{display:flex;gap:20px;flex-wrap:wrap;justify-content:center;max-width:920px;margin:28px auto 0;padding:0 24px;}
+  .ring-wrap{display:flex;flex-direction:column;align-items:center;gap:8px;}
+  .ring-label{font-family:'Space Grotesk',sans-serif;font-size:0.75rem;font-weight:600;color:var(--soft);}
+  .ring-val{font-family:'Space Grotesk',sans-serif;font-size:0.85rem;font-weight:700;color:var(--white);}
 </style>
 </head>
 <body>
@@ -48,8 +56,10 @@
 <nav class="top-nav">
   <a href="index.html" class="nav-logo">🚀 Mission <span>Academy</span></a>
   <div class="nav-tabs">
-    <a href="math.html" class="nav-tab">➕ Math</a>
-    <a href="ela.html"  class="nav-tab">📖 ELA</a>
+    <a href="math.html"     class="nav-tab">➕ Math</a>
+    <a href="ela.html"      class="nav-tab">📖 ELA</a>
+    <a href="reading.html"  class="nav-tab">📚 Reading</a>
+    <a href="spelling.html" class="nav-tab">🔤 Spelling</a>
     <a href="trophies.html" class="nav-tab" style="color:var(--gold);border-color:var(--gold);">🏆 Trophies</a>
   </div>
 </nav>
@@ -61,6 +71,7 @@
 </div>
 
 <div class="stat-bar" id="statBar"></div>
+<div class="progress-rings" id="progressRings"></div>
 <div class="trophy-sections" id="trophySections"></div>
 
 <script src="engine.js"></script>
@@ -69,83 +80,125 @@ const ME = window.MissionEngine;
 const name = ME.getStudentName() || 'Explorer';
 document.getElementById('trophyName').textContent = name;
 
-const mathP = ME.getProgress('math');
-const elaP  = ME.getProgress('ela');
+const mathP  = ME.getProgress('math');
+const elaP   = ME.getProgress('ela');
+const readP  = ME.getProgress('reading');
+const spellP = ME.getProgress('spelling');
 
-function countDone(p, total) {
-  let n=0; for(let i=1;i<=total;i++) if(p[`best_${i}`]!=null) n++; return n;
-}
-function countPerfect(p, total) {
-  let n=0; for(let i=1;i<=total;i++) if(p[`best_${i}`]===20) n++; return n;
-}
-function totalScore(p, total) {
-  let s=0; for(let i=1;i<=total;i++) s+=p[`best_${i}`]||0; return s;
-}
+function countDone(p,total){ let n=0; for(let i=1;i<=total;i++) if(p[`best_${i}`]!=null) n++; return n; }
+function countPerf(p,total){ let n=0; for(let i=1;i<=total;i++) if(p[`best_${i}`]===20||p[`best_${i}`]===5||p[`best_${i}`]===10) n++; return n; }
+function countPerfExact(p,total,perfect){ let n=0; for(let i=1;i<=total;i++) if(p[`best_${i}`]===perfect) n++; return n; }
 
-const mathDone = countDone(mathP, 30);
-const elaDone  = countDone(elaP, 60);
-const mathPerf = countPerfect(mathP, 30);
-const elaPerf  = countPerfect(elaP, 60);
-const totalDone = mathDone + elaDone;
-const totalPerf = mathPerf + elaPerf;
+const mathDone  = countDone(mathP,30);
+const elaDone   = countDone(elaP,60);
+const readDone  = countDone(readP,20);
+const spellDone = countDone(spellP,20);
+const totalDone = mathDone+elaDone+readDone+spellDone;
+
+const mathPerf  = countPerfExact(mathP,30,20);
+const elaPerf   = countPerfExact(elaP,60,20);
+const readPerf  = countPerfExact(readP,20,5);
+const spellPerf = countPerfExact(spellP,20,10);
+const totalPerf = mathPerf+elaPerf+readPerf+spellPerf;
 
 // ── Stats bar ──
-document.getElementById('statBar').innerHTML = `
-  <div class="stat-pill"><div class="stat-pill-val">${totalDone}</div><div class="stat-pill-label">Missions Done</div></div>
+document.getElementById('statBar').innerHTML=`
+  <div class="stat-pill"><div class="stat-pill-val">${totalDone}</div><div class="stat-pill-label">Total Missions</div></div>
   <div class="stat-pill"><div class="stat-pill-val">${totalPerf}</div><div class="stat-pill-label">Perfect Scores</div></div>
-  <div class="stat-pill"><div class="stat-pill-val">${mathDone}</div><div class="stat-pill-label">Math Missions</div></div>
-  <div class="stat-pill"><div class="stat-pill-val">${elaDone}</div><div class="stat-pill-label">ELA Missions</div></div>
+  <div class="stat-pill"><div class="stat-pill-val">${mathDone}</div><div class="stat-pill-label">➕ Math</div></div>
+  <div class="stat-pill"><div class="stat-pill-val">${elaDone}</div><div class="stat-pill-label">📖 ELA</div></div>
+  <div class="stat-pill"><div class="stat-pill-val">${readDone}</div><div class="stat-pill-label">📚 Reading</div></div>
+  <div class="stat-pill"><div class="stat-pill-val">${spellDone}</div><div class="stat-pill-label">🔤 Spelling</div></div>
 `;
+
+// ── Progress rings (SVG mini circles) ──
+function ringHTML(done, total, color, label) {
+  const pct = done/total, r=28, circ=2*Math.PI*r;
+  const dash = pct*circ, gap = circ-dash;
+  return `<div class="ring-wrap">
+    <svg width="70" height="70" viewBox="0 0 70 70">
+      <circle cx="35" cy="35" r="${r}" fill="none" stroke="rgba(255,255,255,0.08)" stroke-width="6"/>
+      <circle cx="35" cy="35" r="${r}" fill="none" stroke="${color}" stroke-width="6"
+        stroke-dasharray="${dash.toFixed(1)} ${gap.toFixed(1)}"
+        stroke-linecap="round" transform="rotate(-90 35 35)"/>
+      <text x="35" y="39" text-anchor="middle" fill="white" font-family="Space Grotesk,sans-serif" font-size="12" font-weight="700">${done}/${total}</text>
+    </svg>
+    <div class="ring-label">${label}</div>
+  </div>`;
+}
+document.getElementById('progressRings').innerHTML =
+  ringHTML(mathDone,30,'#4ecdc4','Math') +
+  ringHTML(elaDone,60,'#e84393','ELA') +
+  ringHTML(readDone,20,'#a78bfa','Reading') +
+  ringHTML(spellDone,20,'#fb923c','Spelling');
 
 // ── Trophy definitions ──
 const trophies = [
-  // Math milestones
-  { id:'math1', icon:'⭐', name:'First Launch', desc:'Complete your first Math mission', earned: mathDone>=1 },
-  { id:'math5', icon:'🔢', name:'Number Cadet', desc:'Complete 5 Math missions', earned: mathDone>=5 },
-  { id:'math10', icon:'➕', name:'Addition Ace', desc:'Complete 10 Math missions', earned: mathDone>=10 },
-  { id:'math15', icon:'📐', name:'Place Value Pro', desc:'Complete 15 Math missions', earned: mathDone>=15 },
-  { id:'math20', icon:'⚖️', name:'Comparison King', desc:'Complete 20 Math missions', earned: mathDone>=20 },
-  { id:'math25', icon:'🔄', name:'Regrouping Ranger', desc:'Complete 25 Math missions', earned: mathDone>=25 },
-  { id:'math30', icon:'🏆', name:'Math Master', desc:'Complete ALL 30 Math missions', earned: mathDone>=30 },
-  // ELA milestones
-  { id:'ela1', icon:'📝', name:'Word Explorer', desc:'Complete your first ELA mission', earned: elaDone>=1 },
-  { id:'ela10', icon:'📚', name:'Noun Navigator', desc:'Complete 10 ELA missions', earned: elaDone>=10 },
-  { id:'ela20', icon:'🗣️', name:'Verb Voyager', desc:'Complete 20 ELA missions', earned: elaDone>=20 },
-  { id:'ela30', icon:'✏️', name:'Grammar Galactica', desc:'Complete 30 ELA missions', earned: elaDone>=30 },
-  { id:'ela45', icon:'🌟', name:'Word Wizard', desc:'Complete 45 ELA missions', earned: elaDone>=45 },
-  { id:'ela60', icon:'👑', name:'ELA Champion', desc:'Complete ALL 60 ELA missions', earned: elaDone>=60 },
-  // Perfect score trophies
-  { id:'perf1', icon:'💎', name:'Diamond Mind', desc:'Get a perfect score on any mission', earned: totalPerf>=1 },
-  { id:'perf5', icon:'🌙', name:'Perfectionist', desc:'Get 5 perfect scores', earned: totalPerf>=5 },
-  { id:'perf10', icon:'🌠', name:'Star Collector', desc:'Get 10 perfect scores', earned: totalPerf>=10 },
-  { id:'perf20', icon:'🚀', name:'Rocket Scholar', desc:'Get 20 perfect scores', earned: totalPerf>=20 },
-  // Combined
-  { id:'both10', icon:'🌍', name:'Balanced Explorer', desc:'Complete 5 Math AND 5 ELA missions', earned: mathDone>=5 && elaDone>=5 },
-  { id:'both30', icon:'🌌', name:'Galaxy Brain', desc:'Complete 15 Math AND 15 ELA missions', earned: mathDone>=15 && elaDone>=15 },
-  { id:'allall', icon:'🎓', name:'Mission Academy Graduate', desc:'Complete ALL 90 missions!', earned: mathDone>=30 && elaDone>=60 },
+  // ── Math ──
+  {icon:'⭐',name:'First Launch',       desc:'Complete your first Math mission',    earned:mathDone>=1},
+  {icon:'🔢',name:'Number Cadet',       desc:'Complete 5 Math missions',            earned:mathDone>=5},
+  {icon:'➕',name:'Addition Ace',        desc:'Complete 10 Math missions',           earned:mathDone>=10},
+  {icon:'📐',name:'Place Value Pro',    desc:'Complete 15 Math missions',           earned:mathDone>=15},
+  {icon:'⚖️',name:'Comparison King',   desc:'Complete 20 Math missions',           earned:mathDone>=20},
+  {icon:'🔄',name:'Regrouping Ranger',  desc:'Complete 25 Math missions',           earned:mathDone>=25},
+  {icon:'🏆',name:'Math Master',        desc:'Complete ALL 30 Math missions',       earned:mathDone>=30},
+
+  // ── ELA ──
+  {icon:'📝',name:'Word Explorer',      desc:'Complete your first ELA mission',     earned:elaDone>=1},
+  {icon:'📚',name:'Noun Navigator',     desc:'Complete 10 ELA missions',            earned:elaDone>=10},
+  {icon:'🗣️',name:'Verb Voyager',      desc:'Complete 20 ELA missions',            earned:elaDone>=20},
+  {icon:'✏️',name:'Grammar Galactica', desc:'Complete 30 ELA missions',            earned:elaDone>=30},
+  {icon:'🌟',name:'Word Wizard',        desc:'Complete 45 ELA missions',            earned:elaDone>=45},
+  {icon:'👑',name:'ELA Champion',       desc:'Complete ALL 60 ELA missions',        earned:elaDone>=60},
+
+  // ── Reading ──
+  {icon:'📖',name:'First Page',         desc:'Complete your first Reading passage', earned:readDone>=1},
+  {icon:'🔍',name:'Story Detective',    desc:'Complete 5 Reading passages',         earned:readDone>=5},
+  {icon:'📰',name:'Info Explorer',      desc:'Complete 10 Reading passages',        earned:readDone>=10},
+  {icon:'🦉',name:'Wise Reader',        desc:'Complete 15 Reading passages',        earned:readDone>=15},
+  {icon:'🎓',name:'Reading Master',     desc:'Complete ALL 20 Reading passages',    earned:readDone>=20},
+
+  // ── Spelling ──
+  {icon:'🔤',name:'First Word',         desc:'Complete your first Spelling mission',earned:spellDone>=1},
+  {icon:'🅰️',name:'Vowel Voyager',     desc:'Complete 5 Spelling missions',        earned:spellDone>=5},
+  {icon:'✍️',name:'Word Builder',      desc:'Complete 10 Spelling missions',       earned:spellDone>=10},
+  {icon:'📜',name:'Spelling Star',      desc:'Complete 15 Spelling missions',       earned:spellDone>=15},
+  {icon:'🏅',name:'Spelling Champion',  desc:'Complete ALL 20 Spelling missions',   earned:spellDone>=20},
+
+  // ── Perfect scores ──
+  {icon:'💎',name:'Diamond Mind',       desc:'Get a perfect score on any mission',  earned:totalPerf>=1},
+  {icon:'🌙',name:'Perfectionist',      desc:'Get 5 perfect scores',               earned:totalPerf>=5},
+  {icon:'🌠',name:'Star Collector',     desc:'Get 10 perfect scores',              earned:totalPerf>=10},
+  {icon:'🚀',name:'Rocket Scholar',     desc:'Get 20 perfect scores',              earned:totalPerf>=20},
+  {icon:'🌌',name:'Perfect Galaxy',     desc:'Get 30 perfect scores',              earned:totalPerf>=30},
+
+  // ── All-subject milestones ──
+  {icon:'🌍',name:'Balanced Explorer',  desc:'Complete 5 missions in ALL 4 zones', earned:mathDone>=5&&elaDone>=5&&readDone>=5&&spellDone>=5},
+  {icon:'🌈',name:'Rainbow Scholar',    desc:'Complete 10 in ALL 4 zones',         earned:mathDone>=10&&elaDone>=10&&readDone>=10&&spellDone>=10},
+  {icon:'🎓',name:'Academy Graduate',   desc:'Complete ALL 130 missions!',         earned:mathDone>=30&&elaDone>=60&&readDone>=20&&spellDone>=20},
 ];
 
-const mathTrophies = trophies.filter(t=>t.id.startsWith('math'));
-const elaTrophies  = trophies.filter(t=>t.id.startsWith('ela'));
-const perfTrophies = trophies.filter(t=>t.id.startsWith('perf'));
-const combTrophies = trophies.filter(t=>t.id.startsWith('both')||t.id==='allall');
+const sections = [
+  {label:'➕ Math Trophies',    items:trophies.slice(0,7)},
+  {label:'📖 ELA Trophies',     items:trophies.slice(7,13)},
+  {label:'📚 Reading Trophies', items:trophies.slice(13,18)},
+  {label:'🔤 Spelling Trophies',items:trophies.slice(18,23)},
+  {label:'💎 Perfect Score Awards', items:trophies.slice(23,28)},
+  {label:'🌟 Special Achievements', items:trophies.slice(28)},
+];
 
-function renderSection(title, items) {
-  const grid = items.map(t=>`
+function renderSection(label, items) {
+  const grid=items.map(t=>`
     <div class="trophy-card ${t.earned?'earned':'locked-trophy'}">
       <div class="trophy-icon">${t.icon}</div>
       <div class="trophy-card-name">${t.name}</div>
       <div class="trophy-card-desc">${t.desc}</div>
-    </div>
-  `).join('');
-  return `<div class="trophy-section-title">${title}</div><div class="trophies-grid">${grid}</div>`;
+    </div>`).join('');
+  return `<div class="trophy-section-title">${label}</div><div class="trophies-grid">${grid}</div>`;
 }
 
 document.getElementById('trophySections').innerHTML =
-  renderSection('Math Trophies', mathTrophies) +
-  renderSection('ELA Trophies', elaTrophies) +
-  renderSection('Perfect Score Awards', perfTrophies) +
-  renderSection('Special Achievements', combTrophies);
+  sections.map(s=>renderSection(s.label,s.items)).join('');
 </script>
 </body>
 </html>

@@ -103,6 +103,7 @@
       <span>Your best: <span class="beat-score" id="beatScore"></span> — try to beat it!</span>
     </div>
     <div class="streak-banner" id="streakBanner"></div>
+    <div class="lives-row" id="livesRow"></div>
 
     <!-- Passage shown on every question -->
     <div class="passage-card" id="passageCard">
@@ -119,6 +120,19 @@
     <div class="hint-box hidden" id="hintBox" style="border-color:rgba(167,139,250,0.2);color:#a78bfa;background:rgba(167,139,250,0.06);"></div>
     <div class="q-feedback" id="qFeedback"></div>
     <div id="qActionArea"></div>
+  </div>
+</div>
+
+<!-- GAME OVER MODAL -->
+<div class="modal-overlay hidden" id="gameOverModal">
+  <div class="modal-box" style="text-align:center;">
+    <div class="gameover-emoji">💔</div>
+    <div class="gameover-title">Out of Lives!</div>
+    <p class="gameover-msg">You scored <strong id="gameOverScore"></strong> before running out.<br>Try again — you've got this! 💪</p>
+    <div class="result-btns">
+      <button class="result-btn primary" onclick="retryFromGameOver()">Try Again 💪</button>
+      <button class="result-btn secondary" onclick="closeGameOver()">Mission List</button>
+    </div>
   </div>
 </div>
 
@@ -365,8 +379,9 @@ const PASSAGES = [
 
 const SUBJECT = 'reading';
 const ME = window.MissionEngine;
+const MAX_LIVES=3;
 let currentMission=null, questions=[], qIndex=0, score=0, answered=false, pendingLock=null;
-let streak=0, hintUsed=false, prevBest=null, justCompleted=null;
+let streak=0, hintUsed=false, prevBest=null, justCompleted=null, lives=MAX_LIVES;
 let currentPassage=null;
 
 document.getElementById('navName').textContent = ME.getStudentName()||'';
@@ -393,7 +408,7 @@ function buildGrid() {
     div.innerHTML=`<span>${section.label}</span>`; grid.appendChild(div);
     for(let i=section.from; i<=section.to; i++){
       const n=i+1;
-      const locked=(n%6===0)&&!ME.isUnlocked(n,SUBJECT);
+      const locked=ME.isLocked(n)&&!ME.isUnlocked(n,SUBJECT);
       const best=ME.getBest(n,SUBJECT);
       if(best!==null) totalDone++;
       if(best===5) totalPerf++;
@@ -438,7 +453,7 @@ document.getElementById('lockInput').addEventListener('keydown',e=>{if(e.key==='
 function startMission(n,i){
   currentMission=n; currentPassage=PASSAGES[i];
   questions=ME.shuffle([...currentPassage.questions]);
-  qIndex=0; score=0; streak=0;
+  qIndex=0; score=0; streak=0; lives=MAX_LIVES;
   prevBest=ME.getBest(n,SUBJECT);
   document.getElementById('qMissionLabel').textContent=`Passage ${n} — Reading`;
   document.getElementById('passageTitle').textContent=currentPassage.title;
@@ -446,6 +461,7 @@ function startMission(n,i){
   const bb=document.getElementById('beatBanner');
   if(prevBest!==null){ document.getElementById('beatScore').textContent=`${prevBest}/5`; bb.classList.remove('hidden'); }
   else bb.classList.add('hidden');
+  renderHearts();
   document.getElementById('readingModal').classList.remove('hidden');
   showQuestion();
 }
@@ -481,25 +497,45 @@ function updateStreakBanner(){
   else el.classList.remove('visible');
 }
 
-function checkChoice(btn,chosen,correct){
-  if(answered)return; answered=true;
-  const all=btn.closest('.q-choices').querySelectorAll('.q-choice-btn');
-  all.forEach(b=>b.disabled=true);
-  if(chosen.trim().toLowerCase()===correct.trim().toLowerCase()){
-    btn.classList.add('correct'); score++; streak++; ME.AudioFX.correct(); showFeedback(true,correct);
-  } else {
-    btn.classList.add('wrong'); streak=0; ME.AudioFX.wrong();
-    all.forEach(b=>{if(b.textContent.trim().toLowerCase()===correct.trim().toLowerCase())b.classList.add('correct');});
-    showFeedback(false,correct);
-  }
-  if(streak>0&&streak%3===0) setTimeout(()=>ME.AudioFX.streak(),200);
+function renderHearts(){
+  const row=document.getElementById('livesRow');
+  row.innerHTML='<span class="lives-label">Lives</span>'+[0,1,2].map(i=>`<span class="heart${i>=lives?' lost':''}" id="heart${i}">❤️</span>`).join('');
+}
+function loseHeart(){
+  if(lives<=0)return;lives--;
+  const h=document.getElementById(`heart${lives}`);
+  if(h){h.className='heart animating';setTimeout(()=>{h.className='heart lost';},400);}
+  setTimeout(renderHearts,50);
+}
+function handleCorrect(){
+  score++;streak++;ME.AudioFX.correct();
+  document.getElementById('qFeedback').className='q-feedback correct';
+  document.getElementById('qFeedback').textContent='✓ Correct! Great reading!';
+  if(streak>0&&streak%3===0)setTimeout(()=>ME.AudioFX.streak(),200);
+  updateStreakBanner();showNext();
+}
+function handleWrong(){
+  streak=0;ME.AudioFX.wrong();loseHeart();
+  document.getElementById('qFeedback').className='q-feedback wrong';
+  document.getElementById('qFeedback').textContent='Not quite — check the passage again! 💪';
+  updateStreakBanner();
+  if(lives<=0){setTimeout(triggerGameOver,800);return;}
   showNext();
 }
+function triggerGameOver(){
+  document.getElementById('readingModal').classList.add('hidden');
+  document.getElementById('gameOverScore').textContent=`${score}/${questions.length}`;
+  document.getElementById('gameOverModal').classList.remove('hidden');
+}
+function retryFromGameOver(){document.getElementById('gameOverModal').classList.add('hidden');startMission(currentMission,currentMission-1);}
+function closeGameOver(){document.getElementById('gameOverModal').classList.add('hidden');currentMission=null;}
 
-function showFeedback(ok,answer){
-  const fb=document.getElementById('qFeedback');
-  fb.className='q-feedback '+(ok?'correct':'wrong');
-  fb.textContent=ok?'✓ Correct!':`✗ The answer is: ${answer}`;
+function checkChoice(btn,chosen,correct){
+  if(answered)return;answered=true;
+  const all=btn.closest('.q-choices').querySelectorAll('.q-choice-btn');
+  all.forEach(b=>b.disabled=true);
+  if(chosen.trim().toLowerCase()===correct.trim().toLowerCase()){btn.classList.add('correct');handleCorrect();}
+  else{btn.classList.add('wrong');handleWrong();}
 }
 
 function showNext(){

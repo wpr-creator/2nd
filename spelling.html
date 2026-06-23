@@ -143,6 +143,7 @@
       <span>Your best: <span class="beat-score" id="beatScore"></span> — try to beat it!</span>
     </div>
     <div class="streak-banner" id="streakBanner"></div>
+    <div class="lives-row" id="livesRow"></div>
 
     <!-- Speaker -->
     <div class="speak-area">
@@ -168,6 +169,19 @@
     <div class="hint-box hidden" id="hintBox" style="color:#fb923c;border-color:rgba(251,146,60,0.2);background:rgba(251,146,60,0.06);"></div>
     <div class="q-feedback" id="qFeedback"></div>
     <div id="qActionArea"></div>
+  </div>
+</div>
+
+<!-- GAME OVER MODAL -->
+<div class="modal-overlay hidden" id="gameOverModal">
+  <div class="modal-box" style="text-align:center;">
+    <div class="gameover-emoji">💔</div>
+    <div class="gameover-title">Out of Lives!</div>
+    <p class="gameover-msg">You spelled <strong id="gameOverScore"></strong> words correctly!<br>Listen carefully and try again! 💪</p>
+    <div class="result-btns">
+      <button class="result-btn primary" onclick="retryFromGameOver()">Try Again 💪</button>
+      <button class="result-btn secondary" onclick="closeGameOver()">Mission List</button>
+    </div>
   </div>
 </div>
 
@@ -454,8 +468,9 @@ const SPELL_MISSIONS = [
 
 const SUBJECT = 'spelling';
 const ME = window.MissionEngine;
+const MAX_LIVES=3;
 let currentMission=null, wordList=[], wIndex=0, score=0, answered=false, pendingLock=null;
-let streak=0, hintUsed=false, prevBest=null, justCompleted=null;
+let streak=0, hintUsed=false, prevBest=null, justCompleted=null, lives=MAX_LIVES;
 let currentWord='';
 
 document.getElementById('navName').textContent = ME.getStudentName()||'';
@@ -499,7 +514,7 @@ function buildGrid(){
     div.innerHTML=`<span>${section.label}</span>`; grid.appendChild(div);
     for(let i=section.from; i<=section.to; i++){
       const n=i+1;
-      const locked=(n%6===0)&&!ME.isUnlocked(n,SUBJECT);
+      const locked=ME.isLocked(n)&&!ME.isUnlocked(n,SUBJECT);
       const best=ME.getBest(n,SUBJECT);
       if(best!==null) totalDone++;
       if(best===10) totalPerf++;
@@ -543,12 +558,13 @@ document.getElementById('lockInput').addEventListener('keydown',e=>{if(e.key==='
 function startMission(n,i){
   currentMission=n;
   wordList=ME.shuffle([...SPELL_MISSIONS[i].words]);
-  wIndex=0; score=0; streak=0;
+  wIndex=0; score=0; streak=0; lives=MAX_LIVES;
   prevBest=ME.getBest(n,SUBJECT);
   document.getElementById('qMissionLabel').textContent=`Mission ${n} — Spelling`;
   const bb=document.getElementById('beatBanner');
   if(prevBest!==null){ document.getElementById('beatScore').textContent=`${prevBest}/10`; bb.classList.remove('hidden'); }
   else bb.classList.add('hidden');
+  renderHearts();
   document.getElementById('spellingModal').classList.remove('hidden');
   showWord();
 }
@@ -597,6 +613,25 @@ function updateStreakBanner(){
   else el.classList.remove('visible');
 }
 
+function renderHearts(){
+  const row=document.getElementById('livesRow');
+  row.innerHTML='<span class="lives-label">Lives</span>'+[0,1,2].map(i=>`<span class="heart${i>=lives?' lost':''}" id="heart${i}">❤️</span>`).join('');
+}
+function loseHeart(){
+  if(lives<=0)return;lives--;
+  const h=document.getElementById(`heart${lives}`);
+  if(h){h.className='heart animating';setTimeout(()=>{h.className='heart lost';},400);}
+  setTimeout(renderHearts,50);
+}
+function triggerGameOver(){
+  window.speechSynthesis.cancel();
+  document.getElementById('spellingModal').classList.add('hidden');
+  document.getElementById('gameOverScore').textContent=`${score}/${wordList.length}`;
+  document.getElementById('gameOverModal').classList.remove('hidden');
+}
+function retryFromGameOver(){document.getElementById('gameOverModal').classList.add('hidden');const i=currentMission-1;startMission(currentMission,i);}
+function closeGameOver(){document.getElementById('gameOverModal').classList.add('hidden');currentMission=null;}
+
 function checkSpelling(){
   if(answered) return;
   const inp=document.getElementById('spellingInput'); if(!inp) return;
@@ -614,9 +649,11 @@ function checkSpelling(){
   } else {
     inp.className='q-input wrong'; streak=0;
     ME.AudioFX.wrong();
-    fb.className='q-feedback wrong'; fb.textContent=`✗ The correct spelling is: ${correct}`;
-    // Speak the correct word again
+    loseHeart();
+    fb.className='q-feedback wrong'; fb.textContent='Not quite — listen again and try next time! 💪';
+    // Speak the word again so they hear it
     setTimeout(()=>speakWord(correct),600);
+    if(lives<=0){setTimeout(triggerGameOver,900);return;}
   }
   if(streak>0&&streak%3===0) setTimeout(()=>ME.AudioFX.streak(),200);
   const isLast=wIndex+1>=wordList.length;

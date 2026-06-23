@@ -10,12 +10,12 @@
 
 <nav class="top-nav">
   <a href="index.html" class="nav-logo">🚀 Mission <span>Academy</span></a>
-  <div style="display:flex;align-items:center;gap:12px;">
+  <div style="display:flex;align-items:center;gap:10px;">
     <span class="nav-student-name" id="navName"></span>
     <div class="nav-tabs">
-      <a href="math.html" class="nav-tab">➕ Math</a>
-      <a href="ela.html"  class="nav-tab active-ela">📖 ELA</a>
-      <a href="reading.html" class="nav-tab">📚 Reading</a>
+      <a href="math.html"     class="nav-tab">➕ Math</a>
+      <a href="ela.html"      class="nav-tab active-ela">📖 ELA</a>
+      <a href="reading.html"  class="nav-tab">📚 Reading</a>
       <a href="spelling.html" class="nav-tab">🔤 Spelling</a>
       <a href="trophies.html" class="nav-tab">🏆</a>
     </div>
@@ -25,7 +25,7 @@
 <div class="page-header">
   <div class="page-eyebrow ela-accent">2nd Grade · 60 Missions</div>
   <h1 class="page-title">ELA Missions</h1>
-  <p class="page-subtitle">Master words, sentences, and grammar — one mission at a time!</p>
+  <p class="page-subtitle">You're a word explorer! Master grammar one mission at a time. 📖</p>
 </div>
 
 <div class="grid-summary" id="gridSummary"></div>
@@ -36,8 +36,8 @@
   <div class="modal-box">
     <button class="q-close-btn" onclick="closeLockModal()">✕</button>
     <div class="lock-icon">🔒</div>
-    <h2 class="lock-title">Checkpoint Mission</h2>
-    <p class="lock-desc">Ask your teacher for the unlock code to continue!</p>
+    <h2 class="lock-title">Checkpoint!</h2>
+    <p class="lock-desc">Awesome progress! Ask your teacher for the unlock code to keep going.</p>
     <input class="lock-input" id="lockInput" type="password" placeholder="Enter code" maxlength="12">
     <div class="lock-error" id="lockError"></div>
     <button class="lock-submit" onclick="submitLockCode()">Unlock Mission</button>
@@ -56,9 +56,9 @@
       <div class="q-progress-bar"><div class="q-progress-fill" id="qProgressFill" style="width:0%"></div></div>
     </div>
     <div class="beat-banner hidden" id="beatBanner">
-      <span>🎯</span>
-      <span>Your best score: <span class="beat-score" id="beatScore"></span> — try to beat it!</span>
+      🎯 <span>Beat your best: <span class="beat-score" id="beatScore"></span></span>
     </div>
+    <div class="lives-row" id="livesRow"></div>
     <div class="streak-banner" id="streakBanner"></div>
     <div class="q-text" id="qText"></div>
     <div id="qAnswerArea"></div>
@@ -71,13 +71,25 @@
   </div>
 </div>
 
+<div class="modal-overlay hidden" id="gameOverModal">
+  <div class="modal-box" style="text-align:center;">
+    <div class="gameover-emoji">💔</div>
+    <div class="gameover-title">Out of Lives!</div>
+    <p class="gameover-msg">You're so close! You scored <strong id="gameOverScore"></strong> before running out.<br>Give it another try — you've got this! 💪</p>
+    <div class="result-btns">
+      <button class="result-btn primary" onclick="retryFromGameOver()">Try Again 💪</button>
+      <button class="result-btn secondary" onclick="closeGameOver()">Mission List</button>
+    </div>
+  </div>
+</div>
+
 <div class="modal-overlay hidden" id="resultModal">
   <div class="modal-box">
     <div class="result-emoji" id="resultEmoji"></div>
     <div class="result-title" id="resultTitle"></div>
     <div class="result-score" id="resultScore"></div>
     <div class="result-subtitle" id="resultSubtitle"></div>
-    <div id="resultBeatMsg" style="text-align:center;color:var(--success);font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:0.95rem;margin-bottom:16px;"></div>
+    <div id="resultBeatMsg" style="text-align:center;color:var(--success);font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:0.92rem;margin-bottom:14px;"></div>
     <div class="result-btns">
       <button class="result-btn primary" onclick="retryMission()">Try Again</button>
       <button class="result-btn secondary" onclick="closeResultModal()">Mission List</button>
@@ -87,21 +99,21 @@
 
 <script src="engine.js"></script>
 <script>
-const SUBJECT='ela';
-const ME=window.MissionEngine;
+const SUBJECT='ela',ME=window.MissionEngine;
+const MAX_LIVES=3;
 let currentMission=null,questions=[],qIndex=0,score=0,answered=false,pendingLock=null;
-let streak=0,hintUsed=false,prevBest=null,justCompletedMission=null;
+let streak=0,hintUsed=false,prevBest=null,justCompleted=null,lives=MAX_LIVES;
 
 document.getElementById('navName').textContent=ME.getStudentName()||'';
 
 function starsHTML(best,total=20){
   if(best===null)return'';
-  const pct=best/total, filled=pct===1?3:pct>=0.8?2:pct>=0.6?1:0;
+  const pct=best/total,filled=pct===1?3:pct>=0.8?2:pct>=0.6?1:0;
   return'<div class="mission-stars">'+[0,1,2].map(i=>`<span class="mission-star">${i<filled?'⭐':'☆'}</span>`).join('')+'</div>';
 }
 
 function buildGrid(){
-  const grid=document.getElementById('missionsGrid'); grid.innerHTML='';
+  const grid=document.getElementById('missionsGrid');grid.innerHTML='';
   const sections=[
     {from:1,to:5,label:'Missions 1–5 · Common, Proper, Singular & Plural Nouns'},
     {from:6,to:11,label:'Missions 6–11 · Possessive & Irregular Plural Nouns'},
@@ -118,30 +130,33 @@ function buildGrid(){
   ];
   let totalDone=0,totalPerf=0;
   for(const section of sections){
-    const div=document.createElement('div');div.className='section-label';div.innerHTML=`<span>${section.label}</span>`;grid.appendChild(div);
+    const div=document.createElement('div');div.className='section-label';
+    div.innerHTML=`<span>${section.label}</span>`;grid.appendChild(div);
     for(let n=section.from;n<=section.to;n++){
       const locked=ME.isLocked(n)&&!ME.isUnlocked(n,SUBJECT);
       const best=ME.getBest(n,SUBJECT);
       if(best!==null)totalDone++;if(best===20)totalPerf++;
       const btn=document.createElement('button');
       btn.className='mission-btn'+(locked?' locked':'')+(best!==null?' completed':'');
-      btn.id=`missionBtn${n}`;
+      btn.id=`mb${n}`;
       btn.innerHTML=`${best===20?'<div class="perfect-badge">Perfect!</div>':''}<div class="mission-number">Mission ${n}</div><div class="mission-name">${ME.elaMissionInfo[n]}</div>${best!==null?`<div class="mission-score${best<14?' low':''}">Best: ${best}/20</div>${starsHTML(best)}`:''}`;
-      if(n===justCompletedMission){btn.classList.add('just-completed');setTimeout(()=>btn.classList.remove('just-completed'),700);}
+      if(n===justCompleted){btn.classList.add('just-completed');setTimeout(()=>btn.classList.remove('just-completed'),700);}
       btn.addEventListener('click',()=>clickMission(n,locked));
       grid.appendChild(btn);
     }
   }
   document.getElementById('gridSummary').innerHTML=`
-    <div class="grid-stat"><div class="grid-stat-val">${totalDone}</div><div class="grid-stat-lbl">missions done</div></div>
-    <div class="grid-stat"><div class="grid-stat-val">${totalPerf}</div><div class="grid-stat-lbl">perfect scores</div></div>
-    <div class="grid-stat"><div class="grid-stat-val">${60-totalDone}</div><div class="grid-stat-lbl">remaining</div></div>
-  `;
+    <div class="grid-stat"><div class="grid-stat-val">${totalDone}</div><div class="grid-stat-lbl">done</div></div>
+    <div class="grid-stat"><div class="grid-stat-val">${totalPerf}</div><div class="grid-stat-lbl">perfect</div></div>
+    <div class="grid-stat"><div class="grid-stat-val">${60-totalDone}</div><div class="grid-stat-lbl">to go</div></div>`;
 }
 
 function clickMission(n,locked){
-  if(locked){pendingLock=n;document.getElementById('lockInput').value='';document.getElementById('lockError').textContent='';document.getElementById('lockModal').classList.remove('hidden');setTimeout(()=>document.getElementById('lockInput').focus(),50);}
-  else startMission(n);
+  if(locked){
+    pendingLock=n;document.getElementById('lockInput').value='';document.getElementById('lockError').textContent='';
+    document.getElementById('lockModal').classList.remove('hidden');
+    setTimeout(()=>document.getElementById('lockInput').focus(),50);
+  } else startMission(n);
 }
 function closeLockModal(){document.getElementById('lockModal').classList.add('hidden');pendingLock=null;}
 function submitLockCode(){
@@ -153,14 +168,27 @@ document.getElementById('lockInput').addEventListener('keydown',e=>{if(e.key==='
 
 function startMission(n){
   currentMission=n;const gen=ME.elaGenerators[n];if(!gen){alert('Coming soon!');return;}
-  questions=ME.shuffle(gen());qIndex=0;score=0;streak=0;
+  questions=ME.shuffle(gen());qIndex=0;score=0;streak=0;lives=MAX_LIVES;
   prevBest=ME.getBest(n,SUBJECT);
   document.getElementById('qMissionLabel').textContent=`Mission ${n} — ELA`;
   const bb=document.getElementById('beatBanner');
   if(prevBest!==null){document.getElementById('beatScore').textContent=`${prevBest}/20`;bb.classList.remove('hidden');}
   else bb.classList.add('hidden');
+  renderHearts();
   document.getElementById('questionModal').classList.remove('hidden');
   showQuestion();
+}
+
+function renderHearts(){
+  const row=document.getElementById('livesRow');
+  row.innerHTML='<span class="lives-label">Lives</span>'+[0,1,2].map(i=>`<span class="heart${i>=lives?' lost':''}" id="heart${i}">❤️</span>`).join('');
+}
+
+function loseHeart(){
+  if(lives<=0)return;lives--;
+  const h=document.getElementById(`heart${lives}`);
+  if(h){h.className='heart animating';setTimeout(()=>{h.className='heart lost';},400);}
+  setTimeout(renderHearts,50);
 }
 
 function showQuestion(){
@@ -170,27 +198,24 @@ function showQuestion(){
   document.getElementById('qText').textContent=q.q;
   document.getElementById('qFeedback').textContent='';document.getElementById('qFeedback').className='q-feedback';
   document.getElementById('hintBox').classList.add('hidden');
-  const hintBtn=document.getElementById('hintBtn');hintBtn.disabled=!q.hint;hintBtn.textContent='💡 Hint';
+  const hb=document.getElementById('hintBtn');hb.disabled=!q.hint;hb.textContent='💡 Hint';
   updateStreakBanner();
   const ansArea=document.getElementById('qAnswerArea'),actArea=document.getElementById('qActionArea');
+  actArea.innerHTML='';
   if(q.type==='choice'){
     const safe=s=>s.replace(/'/g,"\\'");
     ansArea.innerHTML=`<div class="q-choices">${q.choices.map(c=>`<button class="q-choice-btn" onclick="checkChoice(this,'${safe(c)}','${safe(q.answer)}')">${c}</button>`).join('')}</div>`;
-    actArea.innerHTML='';
   } else {
-    ansArea.innerHTML=`<div class="q-input-row"><input class="q-input" id="answerInput" type="text" placeholder="Type your answer…" autocomplete="off"><button class="q-submit-btn" onclick="checkInput()">Check</button></div>`;
-    actArea.innerHTML='';
-    setTimeout(()=>{const inp=document.getElementById('answerInput');if(inp){inp.focus();inp.addEventListener('keydown',e=>{if(e.key==='Enter'&&!answered)checkInput();});}},50);
+    ansArea.innerHTML=`<div class="q-input-row"><input class="q-input" id="ai" type="text" placeholder="Type your answer…" autocomplete="off"><button class="q-submit-btn" onclick="checkInput()">Check</button></div>`;
+    setTimeout(()=>{const i=document.getElementById('ai');if(i){i.focus();i.addEventListener('keydown',e=>{if(e.key==='Enter'&&!answered)checkInput();});}},50);
   }
 }
 
 function showHint(){
   const q=questions[qIndex];if(!q.hint||hintUsed)return;
-  hintUsed=true;
-  document.getElementById('hintBox').textContent=q.hint;
+  hintUsed=true;document.getElementById('hintBox').textContent=q.hint;
   document.getElementById('hintBox').classList.remove('hidden');
-  document.getElementById('hintBtn').disabled=true;
-  ME.AudioFX.hint();
+  document.getElementById('hintBtn').disabled=true;ME.AudioFX.hint();
 }
 
 function updateStreakBanner(){
@@ -199,39 +224,38 @@ function updateStreakBanner(){
   else el.classList.remove('visible');
 }
 
+function handleCorrect(){
+  score++;streak++;ME.AudioFX.correct();
+  document.getElementById('qFeedback').className='q-feedback correct';
+  document.getElementById('qFeedback').textContent='✓ Correct! You got it!';
+  if(streak>0&&streak%3===0)setTimeout(()=>ME.AudioFX.streak(),200);
+  updateStreakBanner();showNext();
+}
+
+function handleWrong(){
+  streak=0;ME.AudioFX.wrong();loseHeart();
+  document.getElementById('qFeedback').className='q-feedback wrong';
+  document.getElementById('qFeedback').textContent='Not quite — keep trying! 💪';
+  updateStreakBanner();
+  if(lives<=0){setTimeout(triggerGameOver,800);return;}
+  showNext();
+}
+
 function checkChoice(btn,chosen,correct){
   if(answered)return;answered=true;
   const all=btn.closest('.q-choices').querySelectorAll('.q-choice-btn');
   all.forEach(b=>b.disabled=true);
-  if(chosen.trim().toLowerCase()===correct.trim().toLowerCase()){
-    btn.classList.add('correct');score++;streak++;ME.AudioFX.correct();showFeedback(true,correct);
-  } else {
-    btn.classList.add('wrong');streak=0;ME.AudioFX.wrong();
-    all.forEach(b=>{if(b.textContent.trim().toLowerCase()===correct.trim().toLowerCase())b.classList.add('correct');});
-    showFeedback(false,correct);
-  }
-  if(streak>0&&streak%3===0)setTimeout(()=>ME.AudioFX.streak(),200);
-  showNext();
+  if(chosen.trim().toLowerCase()===correct.trim().toLowerCase()){btn.classList.add('correct');handleCorrect();}
+  else{btn.classList.add('wrong');handleWrong();}
 }
 
 function checkInput(){
   if(answered)return;
-  const inp=document.getElementById('answerInput');if(!inp)return;
+  const inp=document.getElementById('ai');if(!inp)return;
   const val=inp.value.trim(),q=questions[qIndex];
   answered=true;inp.disabled=true;
-  if(ME.checkAnswer(val,q.answer,q.alternates||[])){
-    inp.classList.add('correct');score++;streak++;ME.AudioFX.correct();showFeedback(true,q.answer);
-  } else {
-    inp.classList.add('wrong');streak=0;ME.AudioFX.wrong();showFeedback(false,q.answer);
-  }
-  if(streak>0&&streak%3===0)setTimeout(()=>ME.AudioFX.streak(),200);
-  showNext();
-}
-
-function showFeedback(ok,answer){
-  const fb=document.getElementById('qFeedback');
-  fb.className='q-feedback '+(ok?'correct':'wrong');
-  fb.textContent=ok?'✓ Correct!':`✗ The answer is: ${answer}`;
+  if(ME.checkAnswer(val,q.answer,q.alternates||[])){inp.classList.add('correct');handleCorrect();}
+  else{inp.classList.add('wrong');handleWrong();}
 }
 
 function showNext(){
@@ -242,15 +266,23 @@ function showNext(){
 function nextQuestion(){qIndex++;showQuestion();}
 function closeQuestionModal(){document.getElementById('questionModal').classList.add('hidden');currentMission=null;}
 
+function triggerGameOver(){
+  document.getElementById('questionModal').classList.add('hidden');
+  document.getElementById('gameOverScore').textContent=`${score}/${questions.length}`;
+  document.getElementById('gameOverModal').classList.remove('hidden');
+}
+function retryFromGameOver(){document.getElementById('gameOverModal').classList.add('hidden');startMission(currentMission);}
+function closeGameOver(){document.getElementById('gameOverModal').classList.add('hidden');currentMission=null;}
+
 function spawnConfetti(){
   const wrap=document.getElementById('confettiWrap');wrap.innerHTML='';
-  const colors=['#f5a623','#4ecdc4','#56cf8a','#e84393','#f0f4ff','#ff6b6b'];
-  for(let i=0;i<60;i++){
+  const colors=['#fbbf24','#34d399','#f472b6','#a78bfa','#38bdf8','#fb923c'];
+  for(let i=0;i<70;i++){
     const p=document.createElement('div');p.className='confetti-piece';
     p.style.left=Math.random()*100+'vw';
     p.style.background=colors[Math.floor(Math.random()*colors.length)];
     p.style.width=(6+Math.random()*8)+'px';p.style.height=(6+Math.random()*8)+'px';
-    p.style.animationDuration=(1.5+Math.random()*1.5)+'s';
+    p.style.animationDuration=(1.4+Math.random()*1.5)+'s';
     p.style.animationDelay=(Math.random()*0.5)+'s';
     wrap.appendChild(p);
   }
@@ -261,17 +293,17 @@ function finishMission(){
   document.getElementById('questionModal').classList.add('hidden');
   const oldBest=ME.getBest(currentMission,SUBJECT);
   ME.markComplete(currentMission,SUBJECT,score);
-  justCompletedMission=currentMission;buildGrid();
-  const pct=Math.round((score/questions.length)*100),newBest=ME.getBest(currentMission,SUBJECT);
+  justCompleted=currentMission;buildGrid();
+  const pct=Math.round((score/questions.length)*100);
   if(pct===100){ME.AudioFX.perfect();spawnConfetti();}else ME.AudioFX.complete();
-  document.getElementById('resultEmoji').textContent=pct===100?'🏆':pct>=80?'🌟':pct>=60?'👍':'💪';
-  document.getElementById('resultTitle').textContent=pct===100?'Perfect Score!':pct>=80?'Great Work!':pct>=60?'Good Job!':'Keep Practicing!';
+  document.getElementById('resultEmoji').textContent=pct===100?'🏆':pct>=80?'🌟':pct>=60?'😊':'💪';
+  document.getElementById('resultTitle').textContent=pct===100?'Perfect Score!':pct>=80?'Amazing Work!':pct>=60?'Good Job!':'Keep Going — You Can Do It!';
   document.getElementById('resultScore').textContent=`${score} / ${questions.length}`;
-  document.getElementById('resultSubtitle').textContent=`That's ${pct}% — Mission ${currentMission} complete!`;
-  const beatMsg=document.getElementById('resultBeatMsg');
-  if(oldBest!==null&&score>oldBest)beatMsg.textContent=`🎉 New best score! (was ${oldBest}/20)`;
-  else if(oldBest!==null&&score===oldBest)beatMsg.textContent=`Matched your best score!`;
-  else beatMsg.textContent='';
+  document.getElementById('resultSubtitle').textContent=`That's ${pct}%! Mission ${currentMission} complete!`;
+  const bm=document.getElementById('resultBeatMsg');
+  if(oldBest!==null&&score>oldBest)bm.textContent=`🎉 New best score! (was ${oldBest}/20)`;
+  else if(oldBest!==null&&score===oldBest)bm.textContent='You matched your best score!';
+  else bm.textContent='';
   document.getElementById('resultModal').classList.remove('hidden');
 }
 
