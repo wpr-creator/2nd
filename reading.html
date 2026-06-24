@@ -448,13 +448,13 @@ function makeFirstGradePassage(p){
   return `${p.title}. Read the clues. ${facts.join(' ')}`;
 }
 
-let readingLevel = localStorage.getItem('missionAcademy_readingLevel') || '2';
+let readingLevel = (window.MissionEngine && window.MissionEngine.getReadingLevel) ? window.MissionEngine.getReadingLevel() : (localStorage.getItem('missionAcademy_readingLevel') || '2');
 let PASSAGES = readingLevel === '1' ? PASSAGES_G1 : PASSAGES_G2;
 const SUBJECT_BASE = 'reading';
 let SUBJECT = `reading_g${readingLevel}`;
 function setReadingLevel(level){
   readingLevel = level;
-  localStorage.setItem('missionAcademy_readingLevel', level);
+  if(ME.setReadingLevelPreference) ME.setReadingLevelPreference(level); else localStorage.setItem('missionAcademy_readingLevel', level);
   PASSAGES = level === '1' ? PASSAGES_G1 : PASSAGES_G2;
   SUBJECT = `reading_g${level}`;
   currentMission = null;
@@ -475,7 +475,7 @@ let currentMission=null, questions=[], qIndex=0, score=0, answered=false, pendin
 let streak=0, hintUsed=false, prevBest=null, justCompleted=null, lives=MAX_LIVES;
 let currentPassage=null;
 
-document.getElementById('navName').textContent = ME.getStudentName()||'';
+{ const av = ME.getAvatar ? ME.getAvatar() : {emoji:'🦅',name:''}; document.getElementById('navName').textContent = `${av.emoji} ${ME.getStudentName()||''}`.trim(); }
 
 const missionInfo = PASSAGES.map(p => p.title);
 

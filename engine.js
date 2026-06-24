@@ -23,18 +23,81 @@ const AudioFX = (() => {
     } catch(e) {}
   }
   return {
-    correct()  { tone(523,'sine',0.12,0.14); tone(659,'sine',0.18,0.14,0.08); tone(784,'sine',0.25,0.12,0.16); },
-    wrong()    { tone(220,'sawtooth',0.18,0.1); tone(180,'sawtooth',0.22,0.08,0.1); },
-    streak()   { [523,659,784,1047].forEach((f,i)=>tone(f,'sine',0.2,0.16,i*0.07)); },
-    complete() { [523,659,784,1047].forEach((f,i)=>tone(f,'sine',0.3,0.14,i*0.09)); },
-    perfect()  { [523,659,784,1047,1319].forEach((f,i)=>tone(f,'sine',0.35,0.14,i*0.08)); },
-    hint()     { tone(440,'sine',0.15,0.1); tone(554,'sine',0.2,0.1,0.12); }
+    correct()  { if(!isSoundOn()) return; tone(523,'sine',0.12,0.14); tone(659,'sine',0.18,0.14,0.08); tone(784,'sine',0.25,0.12,0.16); },
+    wrong()    { if(!isSoundOn()) return; tone(220,'sawtooth',0.18,0.1); tone(180,'sawtooth',0.22,0.08,0.1); },
+    streak()   { if(!isSoundOn()) return; [523,659,784,1047].forEach((f,i)=>tone(f,'sine',0.2,0.16,i*0.07)); },
+    complete() { if(!isSoundOn()) return; [523,659,784,1047].forEach((f,i)=>tone(f,'sine',0.3,0.14,i*0.09)); },
+    perfect()  { if(!isSoundOn()) return; [523,659,784,1047,1319].forEach((f,i)=>tone(f,'sine',0.35,0.14,i*0.08)); },
+    hint()     { if(!isSoundOn()) return; tone(440,'sine',0.15,0.1); tone(554,'sine',0.2,0.1,0.12); }
   };
 })();
 
-// ─── Student Name ──────────────────────────────────────────────────────────
+// ─── Student Profile / Falcon Identity ─────────────────────────────────────
+const FALCON_AVATARS = [
+  { id:'rookie',   emoji:'🦅', name:'Rookie Falcon',   motto:'Ready for takeoff!' },
+  { id:'reader',   emoji:'📚', name:'Reading Falcon',  motto:'Strong readers soar.' },
+  { id:'math',     emoji:'➕', name:'Math Falcon',     motto:'Number power!' },
+  { id:'explorer', emoji:'🧭', name:'Explorer Falcon', motto:'Curious and brave.' },
+  { id:'captain',  emoji:'⭐', name:'Captain Falcon',  motto:'Lead the flight!' },
+  { id:'sky',      emoji:'☁️', name:'Sky Falcon',      motto:'Keep climbing.' }
+];
+
+function safeStudentName(name){ return (name||'student').replace(/[^a-z0-9]/gi,'_').toLowerCase(); }
+function profileKey(name){ return `missionAcademy_profile_${safeStudentName(name||getStudentName())}`; }
+function getAvatarChoice(id){ return FALCON_AVATARS.find(a=>a.id===id) || FALCON_AVATARS[0]; }
+
+function defaultProfile(name='') {
+  return {
+    name: (name||'').trim(),
+    avatar: 'rookie',
+    xp: 0,
+    badges: [],
+    sound: true,
+    readingLevel: localStorage.getItem('missionAcademy_readingLevel') || '2'
+  };
+}
+
+function getProfile(name=getStudentName()) {
+  const cleanName = (name||'').trim();
+  if(!cleanName) return defaultProfile('');
+  try {
+    const saved = JSON.parse(localStorage.getItem(profileKey(cleanName)) || '{}');
+    return { ...defaultProfile(cleanName), ...saved, name: cleanName };
+  } catch {
+    return defaultProfile(cleanName);
+  }
+}
+
+function saveProfile(profile) {
+  const p = { ...defaultProfile(profile?.name), ...(profile||{}) };
+  p.name = (p.name || getStudentName() || '').trim();
+  if(!p.name) return p;
+  localStorage.setItem(profileKey(p.name), JSON.stringify(p));
+  return p;
+}
+
 function getStudentName() { return localStorage.getItem('missionAcademy_studentName') || ''; }
-function setStudentName(name) { localStorage.setItem('missionAcademy_studentName', name.trim()); }
+function setStudentName(name) {
+  const clean = (name||'').trim();
+  localStorage.setItem('missionAcademy_studentName', clean);
+  if(clean) saveProfile(getProfile(clean));
+}
+function setAvatar(id) { const p=getProfile(); p.avatar=getAvatarChoice(id).id; return saveProfile(p); }
+function getAvatar(id=null) { return getAvatarChoice(id || getProfile().avatar); }
+function isSoundOn() { return getProfile().sound !== false; }
+function setSoundOn(value) { const p=getProfile(); p.sound=!!value; return saveProfile(p); }
+function toggleSound() { const p=getProfile(); p.sound = p.sound === false; return saveProfile(p).sound; }
+function getReadingLevel(){ return String(getProfile().readingLevel || localStorage.getItem('missionAcademy_readingLevel') || '2'); }
+function setReadingLevelPreference(level){ const p=getProfile(); p.readingLevel=String(level); localStorage.setItem('missionAcademy_readingLevel', String(level)); saveProfile(p); return p.readingLevel; }
+function getRank(xp=(getProfile().xp||0)) {
+  if(xp>=1000) return 'Falcon Legend';
+  if(xp>=500) return 'Mountain Soarer';
+  if(xp>=250) return 'Sky Explorer';
+  if(xp>=100) return 'Falcon Flyer';
+  return 'Nest Cadet';
+}
+function addXP(amount) { const p=getProfile(); p.xp=(p.xp||0)+Number(amount||0); saveProfile(p); return p.xp; }
+function awardBadge(id) { const p=getProfile(); p.badges=Array.isArray(p.badges)?p.badges:[]; if(id && !p.badges.includes(id)) p.badges.push(id); saveProfile(p); return p.badges; }
 
 // ─── Helpers ───────────────────────────────────────────────────────────────
 function randInt(min, max) { return Math.floor(Math.random() * (max - min + 1)) + min; }
@@ -536,7 +599,7 @@ const elaMissionInfo=[
 ];
 
 // ─── Storage ───────────────────────────────────────────────────────────────
-function storageKey(subject,name){ return `missionAcademy_${subject}_${(name||'student').replace(/[^a-z0-9]/gi,'_').toLowerCase()}`; }
+function storageKey(subject,name){ return `missionAcademy_${subject}_${safeStudentName(name||'student')}`; }
 function getProgress(subject){ try{return JSON.parse(localStorage.getItem(storageKey(subject,getStudentName()))||'{}');}catch{return{};} }
 function saveProgress(subject,data){ localStorage.setItem(storageKey(subject,getStudentName()),JSON.stringify(data)); }
 // ─── Section-based locking (driven by config.js) ─────────────────────────
@@ -582,7 +645,7 @@ function isUnlocked(n, subject) {
 
 // kept for backwards compatibility — no-op since locking is config-driven
 function unlockMission(n, subject, code) { return code === TEACHER_CODE; }
-function markComplete(n,subject,score){ const p=getProgress(subject);p[`score_${n}`]=score;p[`best_${n}`]=Math.max(score,p[`best_${n}`]||0);saveProgress(subject,p); }
+function markComplete(n,subject,score){ const p=getProgress(subject); const first=p[`best_${n}`]==null; p[`score_${n}`]=score;p[`best_${n}`]=Math.max(score,p[`best_${n}`]||0);saveProgress(subject,p); if(first){ addXP(10); awardBadge('first_mission'); } }
 function getScore(n,subject){ return getProgress(subject)[`score_${n}`]??null; }
 function getBest(n,subject){ return getProgress(subject)[`best_${n}`]??null; }
 
@@ -592,11 +655,24 @@ function getAllStudentProgress(){
     const key=localStorage.key(i);
     if(!key.startsWith('missionAcademy_')||key==='missionAcademy_studentName') continue;
     const rest=key.replace('missionAcademy_','');
-    const subjectMatch=rest.match(/^(math|ela)_(.+)$/);
-    if(!subjectMatch) continue;
-    const [,subject,sName]=subjectMatch;
-    if(!students[sName]) students[sName]={math:{},ela:{}};
-    try{students[sName][subject]=JSON.parse(localStorage.getItem(key)||'{}');}catch{}
+    const subjectMatch=rest.match(/^(math|ela|reading|reading_g1|reading_g2|spelling)_(.+)$/);
+    if(subjectMatch){
+      let [,subject,sName]=subjectMatch;
+      if(subject==='reading_g1'||subject==='reading_g2') subject='reading';
+      if(!students[sName]) students[sName]={math:{},ela:{},reading:{},spelling:{},profile:getProfile(sName.replace(/_/g,' '))};
+      try{students[sName][subject]={...(students[sName][subject]||{}),...JSON.parse(localStorage.getItem(key)||'{}')};}catch{}
+    }
+  }
+  // Add profile-only students, too.
+  for(let i=0;i<localStorage.length;i++){
+    const key=localStorage.key(i);
+    if(!key.startsWith('missionAcademy_profile_')) continue;
+    try{
+      const profile=JSON.parse(localStorage.getItem(key)||'{}');
+      const sName=safeStudentName(profile.name || key.replace('missionAcademy_profile_',''));
+      if(!students[sName]) students[sName]={math:{},ela:{},reading:{},spelling:{},profile};
+      else students[sName].profile={...students[sName].profile,...profile};
+    }catch{}
   }
   return students;
 }
@@ -606,7 +682,7 @@ if(typeof window!=='undefined'){
     TEACHER_CODE,
     mathGenerators,mathMissionInfo,elaGenerators,elaMissionInfo,
     getProgress,saveProgress,isLocked,isUnlocked,unlockMission,markComplete,getScore,getBest,getSectionForMission,getOpenSections,
-    getAllStudentProgress,getStudentName,setStudentName,
+    getAllStudentProgress,getStudentName,setStudentName,getProfile,saveProfile,setAvatar,getAvatar,getAvatarChoice,FALCON_AVATARS,getRank,addXP,awardBadge,isSoundOn,setSoundOn,toggleSound,getReadingLevel,setReadingLevelPreference,
     AudioFX,checkAnswer,randInt,shuffle
   };
 }
