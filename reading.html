@@ -97,7 +97,7 @@
 </nav>
 
 <div class="page-header">
-  <div class="page-eyebrow reading-accent">2nd Grade · 20 Passages</div>
+  <div class="page-eyebrow reading-accent">Falcon Reading · 20 Passages</div>
   <h1 class="page-title">Reading Missions</h1>
   <p class="page-subtitle">Read each story, then answer the questions. You've got this!</p>
 </div>
@@ -108,8 +108,8 @@
     <div class="level-note" id="levelNote"></div>
   </div>
   <div class="level-buttons">
-    <button class="level-btn" data-level="1" onclick="setReadingLevel('1')">1st Grade</button>
-    <button class="level-btn" data-level="2" onclick="setReadingLevel('2')">2nd Grade</button>
+    <button class="level-btn" data-level="1" onclick="setReadingLevel('1')">Ground Level</button>
+    <button class="level-btn" data-level="2" onclick="setReadingLevel('2')">Soaring High</button>
   </div>
 </div>
 
@@ -466,7 +466,7 @@ function setReadingLevel(level){
 function updateLevelToggle(){
   document.querySelectorAll('.level-btn').forEach(btn => btn.classList.toggle('active', btn.dataset.level === readingLevel));
   const note = document.getElementById('levelNote');
-  if(note) note.textContent = readingLevel === '1' ? '1st grade mode: shorter passage clues.' : '2nd grade mode: full passage stories.';
+  if(note) note.textContent = readingLevel === '1' ? 'Ground Level: shorter passage clues.' : 'Soaring High: full passage stories.';
 }
 
 const ME = window.MissionEngine;
@@ -508,7 +508,7 @@ function buildGrid() {
       btn.id=`missionBtn${n}`;
       btn.innerHTML=`
         ${best===5?'<div class="perfect-badge">Perfect!</div>':''}
-        <div class="mission-number">Passage ${n} · Grade ${readingLevel}</div>
+        <div class="mission-number">Passage ${n} · ${readingLevel === '1' ? 'Ground Level' : 'Soaring High'}</div>
         <div class="mission-name">${PASSAGES[i].title}</div>
         ${best!==null?`<div class="mission-score${best<4?' low':''}">Best: ${best}/5</div>${starsHTML(best)}`:(ME.getProgress(SUBJECT)[`draft_${n}`]?'<div class="mission-score low">In progress — saved</div>':'')}
       `;
@@ -580,7 +580,7 @@ function startMission(n,i){
     saveMissionDraft();
   }
   prevBest=ME.getBest(n,SUBJECT);
-  document.getElementById('qMissionLabel').textContent=`Passage ${n} — Reading · Grade ${readingLevel}`;
+  document.getElementById('qMissionLabel').textContent=`Passage ${n} — ${readingLevel === '1' ? 'Ground Level' : 'Soaring High'}`;
   document.getElementById('passageTitle').textContent=currentPassage.title;
   document.getElementById('passageText').textContent=currentPassage.text;
   const bb=document.getElementById('beatBanner');
@@ -650,12 +650,24 @@ function handleWrong(){
   showNext();
 }
 function triggerGameOver(){
+  // Once all 3 lives are gone, the attempt is over. Clear the saved draft so
+  // the next try starts fresh, but do not reset lives early after only 1–2 misses.
+  clearMissionDraft(currentMission);
   document.getElementById('readingModal').classList.add('hidden');
   document.getElementById('gameOverScore').textContent=`${score}/${questions.length}`;
   document.getElementById('gameOverModal').classList.remove('hidden');
 }
 function retryFromGameOver(){document.getElementById('gameOverModal').classList.add('hidden');startMission(currentMission,currentMission-1);}
 function closeGameOver(){document.getElementById('gameOverModal').classList.add('hidden');currentMission=null;}
+
+// Save unfinished reading attempts if students close the modal, reload, or switch tabs.
+// This keeps lost lives from resetting unless the student has truly lost all 3.
+window.addEventListener('beforeunload', () => {
+  if(currentMission && questions.length && lives > 0 && qIndex < questions.length) saveMissionDraft();
+});
+document.addEventListener('visibilitychange', () => {
+  if(document.hidden && currentMission && questions.length && lives > 0 && qIndex < questions.length) saveMissionDraft();
+});
 
 function checkChoice(btn,chosen,correct){
   if(answered)return;answered=true;
@@ -671,7 +683,11 @@ function showNext(){
 }
 
 function nextQuestion(){ qIndex++; saveMissionDraft(); showQuestion(); }
-function closeReadingModal(){ document.getElementById('readingModal').classList.add('hidden'); currentMission=null; }
+function closeReadingModal(){
+  if(currentMission && questions.length && lives > 0 && qIndex < questions.length) saveMissionDraft();
+  document.getElementById('readingModal').classList.add('hidden');
+  currentMission=null;
+}
 
 function spawnConfetti(){
   const wrap=document.getElementById('confettiWrap'); wrap.innerHTML='';
