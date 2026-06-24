@@ -736,6 +736,236 @@ function genAntonymsA(){ return varied(genSynonymsAntonyms, [qShort('What is an 
 function genSynAntMixedA(){ return varied(genSynonymsAntonyms, [qShort('What is a synonym for "sick"?','ill','Synonym means same or almost the same.'), qShort('What is an antonym for "empty"?','full','Antonym means opposite.')]); }
 function genSynAntMixedB(){ return varied(genSynonymsAntonyms, [qShort('What is a synonym for "quick"?','fast','Synonym means same or almost the same.'), qShort('What is an antonym for "first"?','last','Antonym means opposite.')]); }
 function genWordMeaningReview(){ return varied(genSynonymsAntonyms, []); }
+
+
+// ─── Balanced ELA Mission Builder ──────────────────────────────────────────
+// Builds each ELA mission from a larger, mixed pool so missions teach the
+// same topic without repeating the same exact question set.
+function questionId(item){
+  return String((item.q||'') + '|' + (item.answer||'')).toLowerCase().replace(/\s+/g,' ').trim();
+}
+function uniqueQuestions(items){
+  const seen=new Set(), out=[];
+  for(const item of items){
+    if(!item || !item.q || item.answer===undefined) continue;
+    const id=questionId(item);
+    if(seen.has(id)) continue;
+    seen.add(id); out.push(item);
+  }
+  return out;
+}
+function repeatBank(fn, times=4){
+  let out=[];
+  for(let i=0;i<times;i++) out = out.concat(fn());
+  return out;
+}
+function getRecentQuestionIds(subject){
+  try { return JSON.parse(localStorage.getItem(`missionAcademy_recentQuestions_${subject}`)||'[]'); }
+  catch { return []; }
+}
+function saveRecentQuestionIds(subject, ids){
+  localStorage.setItem(`missionAcademy_recentQuestions_${subject}`, JSON.stringify(ids.slice(-120)));
+}
+function pickBalanced(pool, count, avoidSet){
+  const unique=uniqueQuestions(pool);
+  const fresh=shuffle(unique.filter(q=>!avoidSet.has(questionId(q))));
+  const fallback=shuffle(unique.filter(q=>avoidSet.has(questionId(q))));
+  return [...fresh, ...fallback].slice(0,count);
+}
+function buildElaMission(parts, total=20){
+  const recent=new Set(getRecentQuestionIds('ela'));
+  let mission=[];
+  const buckets=[
+    ['easy', Math.max(0, parts.easyCount ?? 8)],
+    ['medium', Math.max(0, parts.mediumCount ?? 8)],
+    ['challenge', Math.max(0, parts.challengeCount ?? 4)]
+  ];
+  for(const [key,count] of buckets){
+    const picked=pickBalanced(parts[key]||[], count, recent);
+    mission = mission.concat(picked);
+    picked.forEach(q=>recent.add(questionId(q)));
+  }
+  if(mission.length < total){
+    const all=[...(parts.easy||[]), ...(parts.medium||[]), ...(parts.challenge||[]), ...(parts.extra||[])];
+    mission = mission.concat(pickBalanced(all, total-mission.length, new Set(mission.map(questionId))));
+  }
+  mission=shuffle(uniqueQuestions(mission)).slice(0,total);
+  saveRecentQuestionIds('ela', [...getRecentQuestionIds('ela'), ...mission.map(questionId)]);
+  return mission;
+}
+function byText(items, pattern){ return items.filter(x=>pattern.test((x.q||'')+' '+(x.hint||'')+' '+(x.answer||''))); }
+function qFindNoun(sentence, answer, hint){ return qChoice(`Which word is a noun in this sentence? "${sentence}"`, answer, shuffle([answer,'quickly','runs','very']).slice(0,4), hint); }
+
+const NOUN_EXTRA_WIDE = [
+  qFindNoun('The eagle flew over the school.', 'eagle', 'A noun names a person, place, thing, or animal.'),
+  qFindNoun('Jayden opened his backpack.', 'backpack', 'Backpack is a thing.'),
+  qFindNoun('The garden has red flowers.', 'garden', 'Garden is a place.'),
+  qChoice('Choose the proper noun.', 'Ms. Chen', ['teacher','school','Ms. Chen','city'], 'A proper noun names one specific person, place, or thing.'),
+  qChoice('Choose the common noun.', 'park', ['Balboa Park','Friday','park','Sofia'], 'A common noun is a general person, place, or thing.'),
+  qChoice('Which noun should begin with a capital letter?', 'california', ['desk','california','pencil','teacher'], 'A state name is a proper noun.'),
+  qChoice('Which noun should begin with a capital letter?', 'tuesday', ['tuesday','chair','book','dog'], 'Days of the week are proper nouns.'),
+  qShort('What is the plural of "brush"?', 'brushes', 'Words ending in sh add -es.'),
+  qShort('What is the plural of "dish"?', 'dishes', 'Words ending in sh add -es.'),
+  qShort('What is the plural of "berry"?', 'berries', 'Change y to i and add -es.'),
+  qShort('What is the plural of "monkey"?', 'monkeys', 'Vowel + y usually just adds -s.'),
+  qChoice('Choose the correct plural: one class, two ___.', 'classes', ['classs','classes','classies','class'], 'Class ends in s, so add -es.'),
+  qChoice('Choose the correct plural: one baby, three ___.', 'babies', ['babys','babies','babyes','baby'], 'Change y to i and add -es.')
+];
+const POSSESSIVE_IRREGULAR_WIDE = [
+  qChoice('Choose the possessive noun: The ___ tail is fluffy.', "cat's", ['cat','cats',"cat's",'catses'], 'The tail belongs to one cat.'),
+  qChoice('Choose the possessive noun: The ___ lunches are on the table.', "children's", ['childrens','children',"children's",'childrens\''], 'Children is irregular, then add apostrophe s.'),
+  qShort('Make "team" possessive.', "team's", 'Add apostrophe s.'),
+  qShort('Make "boys" possessive.', "boys'", 'Plural nouns ending in s add only an apostrophe.'),
+  qShort('What is the irregular plural of "woman"?', 'women', 'Woman changes to women.'),
+  qShort('What is the irregular plural of "man"?', 'men', 'Man changes to men.'),
+  qShort('What is the irregular plural of "leaf"?', 'leaves', 'Change f to v and add -es.'),
+  qChoice('Choose the correct plural: one wolf, two ___.', 'wolves', ['wolfs','wolves','wolfes','wolf'], 'Change f to v and add -es.')
+];
+const PRONOUN_PREDICATE_WIDE = [
+  qChoice('Replace the subject: "Aaliyah and Noor made a poster."', 'They', ['She','They','It','He'], 'Two people = they.'),
+  qChoice('Replace the subject: "The lunchbox is blue."', 'It', ['He','She','They','It'], 'A lunchbox is a thing.'),
+  qShort('What reflexive pronoun goes with "we"?', 'ourselves', 'We → ourselves'),
+  qShort('What reflexive pronoun goes with "I"?', 'myself', 'I → myself'),
+  qShort('In "The bright kite flew high," what is the subject?', 'The bright kite', 'The subject is who or what the sentence is about.'),
+  qShort('In "The bright kite flew high," what is the predicate?', 'flew high', 'The predicate tells what the subject did.'),
+  qShort('In "My friends played tag," what is the subject?', 'My friends', 'The subject is who or what the sentence is about.'),
+  qShort('In "My friends played tag," what is the predicate?', 'played tag', 'The predicate tells what the subject did.')
+];
+const VERB_WIDE = [
+  qChoice('Which word is the action verb? "The falcon soars above the field."', 'soars', ['falcon','above','soars','field'], 'The action is what the falcon does.'),
+  qChoice('Which word is the action verb? "Nina builds a tower."', 'builds', ['Nina','builds','tower','a'], 'The action is what Nina does.'),
+  qShort('What is the PAST tense of "carry"?', 'carried', 'Change y to i and add -ed.'),
+  qShort('What is the PAST tense of "drop"?', 'dropped', 'Double the p and add -ed.'),
+  qShort('What is the FUTURE tense of "jump"?', 'will jump', 'Future tense uses will.'),
+  qChoice('What tense is used? "They are drawing maps."', 'present', ['past','present','future'], 'Are drawing is happening now.'),
+  qChoice('What tense is used? "We will visit the library."', 'future', ['past','present','future'], 'Will means future.')
+];
+const SV_WIDE = [
+  qChoice('Choose the correct verb: "The cars ___ fast."', 'move', ['move','moves'], 'Cars is plural.'),
+  qChoice('Choose the correct verb: "The car ___ fast."', 'moves', ['move','moves'], 'Car is singular.'),
+  qChoice('Choose the correct verb: "They ___ kind."', 'are', ['is','are'], 'They uses are.'),
+  qChoice('Choose the correct verb: "He ___ kind."', 'is', ['is','are'], 'He uses is.'),
+  qChoice('Choose the correct verb: "The birds ___ in the tree."', 'sit', ['sit','sits'], 'Birds is plural.'),
+  qChoice('Choose the correct verb: "A bird ___ in the tree."', 'sits', ['sit','sits'], 'A bird is singular.')
+];
+const ADJ_ADV_WIDE = [
+  qChoice('Which word is an adjective? "The soft blanket is warm."', 'soft', ['soft','is','warmly','sleep'], 'Soft describes blanket.'),
+  qChoice('Which word is an adverb? "Milo whispered quietly."', 'quietly', ['Milo','whispered','quietly','voice'], 'Quietly tells how Milo whispered.'),
+  qShort('What is the comparative form of "happy"?', 'happier', 'Change y to i and add -er.'),
+  qShort('What is the comparative form of "wide"?', 'wider', 'Add -r to wide.'),
+  qChoice('In "The bird sang sweetly," is "sweetly" an adjective or adverb?', 'adverb', ['adjective','adverb'], 'Sweetly tells how the bird sang.'),
+  qChoice('In "The silver moon glowed," is "silver" an adjective or adverb?', 'adjective', ['adjective','adverb'], 'Silver describes moon.')
+];
+const SENTENCE_WIDE = [
+  qChoice('Which sentence is a statement?', 'The bell rang at noon.', ['The bell rang at noon.','Did the bell ring?','Ring the bell.','What a loud bell!'], 'A statement tells information.'),
+  qChoice('Which sentence is an exclamation?', 'That was incredible!', ['That was incredible!','Was that incredible?','That was a game.','Walk over here.'], 'An exclamation shows strong feeling.'),
+  qChoice('What punctuation should end this sentence? "Where is my pencil"', '?', ['.','?','!'], 'This sentence asks a question.'),
+  qChoice('What punctuation should end this sentence? "Please open your notebook"', '.', ['.','?','!'], 'A polite command can end with a period.'),
+  qChoice('What type of sentence is this? "Line up by the door."', 'command', ['statement','question','command','exclamation'], 'It tells someone what to do.')
+];
+const CONTRACTION_WIDE = [
+  qShort('Make a contraction: "there is"', "there's", 'There is → there\'s'),
+  qShort('Make a contraction: "that is"', "that's", 'That is → that\'s'),
+  qShort('Make a contraction: "who is"', "who's", 'Who is → who\'s'),
+  qShort('Expand the contraction: "she\'ll"', 'she will', 'The apostrophe replaces missing letters.'),
+  qShort('Expand the contraction: "he\'ll"', 'he will', 'The apostrophe replaces missing letters.'),
+  qShort('Expand the contraction: "they\'ve"', 'they have', 'The apostrophe replaces missing letters.')
+];
+const WORD_STRUCTURE_WIDE = [
+  qShort('Combine "star" and "fish".', 'starfish', 'Star + fish = starfish'),
+  qShort('Combine "basket" and "ball".', 'basketball', 'Basket + ball = basketball'),
+  qShort('Add the prefix "dis-" to "agree".', 'disagree', 'Dis- can mean not or opposite.'),
+  qShort('Add the prefix "un-" to "fair".', 'unfair', 'Un- means not.'),
+  qShort('Add "-less" to "fear".', 'fearless', 'Less means without.'),
+  qShort('Add "-ful" to "thank".', 'thankful', 'Ful means full of.')
+];
+const SYN_ANT_WIDE = [
+  qShort('What is a synonym for "glad"?', 'happy', 'A synonym means the same or almost the same.', ['joyful','pleased']),
+  qShort('What is a synonym for "silent"?', 'quiet', 'A synonym means the same or almost the same.'),
+  qShort('What is a synonym for "large"?', 'big', 'A synonym means the same or almost the same.', ['huge']),
+  qShort('What is an antonym for "brave"?', 'scared', 'An antonym means opposite.', ['afraid','fearful']),
+  qShort('What is an antonym for "inside"?', 'outside', 'An antonym means opposite.'),
+  qShort('What is an antonym for "remember"?', 'forget', 'An antonym means opposite.')
+];
+
+function bankNouns(){ const base=repeatBank(genNouns,5); return {easy:[...byText(base,/common noun|proper noun|Choose the proper|Choose the common/i),...NOUN_COMMON_PROPER_EXTRA_A,...NOUN_COMMON_PROPER_EXTRA_B], medium:[...byText(base,/plural|singular/i),...PLURAL_EXTRA_A,...PLURAL_EXTRA_B], challenge:[...NOUN_EXTRA_WIDE]}; }
+function bankPossessiveIrregular(){ const base=repeatBank(genPossessiveIrregular,5); return {easy:[...byText(base,/possessive|Make/i),...POSSESSIVE_EXTRA], medium:[...byText(base,/irregular plural|plural/i),...IRREGULAR_EXTRA], challenge:[...POSSESSIVE_IRREGULAR_WIDE]}; }
+function bankPronouns(){ const base=repeatBank(genPronouns,5); return {easy:[...byText(base,/Replace the subject|pronoun/i),...PRONOUN_EXTRA], medium:[...byText(base,/reflexive/i),...PRONOUN_EXTRA], challenge:[...SUBJECT_PRED_EXTRA,...PRONOUN_PREDICATE_WIDE]}; }
+function bankVerbs(){ const base=repeatBank(genVerbTense,5); return {easy:[...byText(base,/PAST|FUTURE/i),...VERB_EXTRA], medium:[...byText(base,/tense|present|future|past/i),...VERB_WIDE], challenge:[...VERB_WIDE]}; }
+function bankSV(){ const base=repeatBank(genSVAgreement,5); return {easy:[...base.slice(0,35),...SV_EXTRA], medium:[...base.slice(10),...SV_WIDE], challenge:[...SV_WIDE]}; }
+function bankAdjAdv(){ const base=repeatBank(genAdjectivesAdverbs,5); return {easy:[...byText(base,/adjective|adverb/i),...ADJ_ADV_EXTRA], medium:[...byText(base,/comparative|form/i),...ADJ_ADV_WIDE], challenge:[...ADJ_ADV_WIDE]}; }
+function bankSentences(){ const base=repeatBank(genSentenceTypes,5); return {easy:[...base,...SENTENCE_EXTRA], medium:[...SENTENCE_WIDE], challenge:[...SENTENCE_WIDE]}; }
+function bankContractions(){ const base=repeatBank(genContractions,5); return {easy:[...byText(base,/Make a contraction/i),...CONTRACTION_WIDE], medium:[...byText(base,/Expand/i),...CONTRACTION_WIDE], challenge:[...CONTRACTION_WIDE]}; }
+function bankWordStructure(){ const base=repeatBank(genWordStructure,5); return {easy:[...byText(base,/Combine|compound/i),...WORD_STRUCTURE_WIDE], medium:[...byText(base,/prefix|suffix/i),...WORD_STRUCTURE_WIDE], challenge:[...WORD_STRUCTURE_WIDE]}; }
+function bankSynAnt(){ const base=repeatBank(genSynonymsAntonyms,5); return {easy:[...byText(base,/synonym/i),...SYN_ANT_WIDE], medium:[...byText(base,/antonym/i),...SYN_ANT_WIDE], challenge:[...SYN_ANT_WIDE]}; }
+function buildFromBank(bankFn, mix={easyCount:7,mediumCount:8,challengeCount:5}){ return buildElaMission({...bankFn(), ...mix}); }
+
+// Override ELA generators with balanced mission builders.
+function genNounsMission1(){ return buildFromBank(bankNouns,{easyCount:9,mediumCount:6,challengeCount:5}); }
+function genNounsMission2(){ return buildFromBank(bankNouns,{easyCount:7,mediumCount:8,challengeCount:5}); }
+function genNounsMission3(){ return buildFromBank(bankNouns,{easyCount:5,mediumCount:10,challengeCount:5}); }
+function genNounsMission4(){ return buildFromBank(bankNouns,{easyCount:6,mediumCount:9,challengeCount:5}); }
+function genNounsMission5(){ return buildFromBank(bankNouns,{easyCount:6,mediumCount:7,challengeCount:7}); }
+function genPossessiveA(){ return buildFromBank(bankPossessiveIrregular,{easyCount:10,mediumCount:5,challengeCount:5}); }
+function genPossessiveB(){ return buildFromBank(bankPossessiveIrregular,{easyCount:8,mediumCount:7,challengeCount:5}); }
+function genIrregularA(){ return buildFromBank(bankPossessiveIrregular,{easyCount:4,mediumCount:11,challengeCount:5}); }
+function genIrregularB(){ return buildFromBank(bankPossessiveIrregular,{easyCount:5,mediumCount:10,challengeCount:5}); }
+function genPossessiveIrregularReview(){ return buildFromBank(bankPossessiveIrregular,{easyCount:7,mediumCount:8,challengeCount:5}); }
+function genPronounsA(){ return buildFromBank(bankPronouns,{easyCount:10,mediumCount:5,challengeCount:5}); }
+function genPronounsB(){ return buildFromBank(bankPronouns,{easyCount:7,mediumCount:8,challengeCount:5}); }
+function genSubjectPredicateA(){ return buildFromBank(bankPronouns,{easyCount:4,mediumCount:5,challengeCount:11}); }
+function genPronounsReview(){ return buildFromBank(bankPronouns,{easyCount:7,mediumCount:6,challengeCount:7}); }
+function genVerbAction(){ return buildFromBank(bankVerbs,{easyCount:9,mediumCount:6,challengeCount:5}); }
+function genVerbPast(){ return buildFromBank(bankVerbs,{easyCount:8,mediumCount:7,challengeCount:5}); }
+function genVerbFuturePresent(){ return buildFromBank(bankVerbs,{easyCount:7,mediumCount:8,challengeCount:5}); }
+function genVerbMixed(){ return buildFromBank(bankVerbs,{easyCount:6,mediumCount:8,challengeCount:6}); }
+function genVerbReview(){ return buildFromBank(bankVerbs,{easyCount:6,mediumCount:7,challengeCount:7}); }
+function genSV1(){ return buildFromBank(bankSV,{easyCount:10,mediumCount:6,challengeCount:4}); }
+function genSV2(){ return buildFromBank(bankSV,{easyCount:8,mediumCount:8,challengeCount:4}); }
+function genSV3(){ return buildFromBank(bankSV,{easyCount:7,mediumCount:8,challengeCount:5}); }
+function genSV4(){ return buildFromBank(bankSV,{easyCount:6,mediumCount:9,challengeCount:5}); }
+function genSVReview(){ return buildFromBank(bankSV,{easyCount:6,mediumCount:8,challengeCount:6}); }
+function genAdjectivesA(){ return buildFromBank(bankAdjAdv,{easyCount:10,mediumCount:5,challengeCount:5}); }
+function genComparativesA(){ return buildFromBank(bankAdjAdv,{easyCount:5,mediumCount:10,challengeCount:5}); }
+function genAdverbsA(){ return buildFromBank(bankAdjAdv,{easyCount:8,mediumCount:7,challengeCount:5}); }
+function genAdjAdvCompare(){ return buildFromBank(bankAdjAdv,{easyCount:6,mediumCount:8,challengeCount:6}); }
+function genAdjAdvReview(){ return buildFromBank(bankAdjAdv,{easyCount:6,mediumCount:7,challengeCount:7}); }
+function genStatementsQuestions(){ return buildFromBank(bankSentences,{easyCount:10,mediumCount:6,challengeCount:4}); }
+function genExclamationsCommands(){ return buildFromBank(bankSentences,{easyCount:8,mediumCount:8,challengeCount:4}); }
+function genSentenceTypesA(){ return buildFromBank(bankSentences,{easyCount:7,mediumCount:8,challengeCount:5}); }
+function genSentenceTypesB(){ return buildFromBank(bankSentences,{easyCount:6,mediumCount:9,challengeCount:5}); }
+function genSentenceReview(){ return buildFromBank(bankSentences,{easyCount:6,mediumCount:8,challengeCount:6}); }
+function genContractionsMake(){ return buildFromBank(bankContractions,{easyCount:10,mediumCount:5,challengeCount:5}); }
+function genContractionsExpand(){ return buildFromBank(bankContractions,{easyCount:5,mediumCount:10,challengeCount:5}); }
+function genContractionsMixedA(){ return buildFromBank(bankContractions,{easyCount:7,mediumCount:8,challengeCount:5}); }
+function genContractionsMixedB(){ return buildFromBank(bankContractions,{easyCount:6,mediumCount:8,challengeCount:6}); }
+function genContractionsReview(){ return buildFromBank(bankContractions,{easyCount:6,mediumCount:7,challengeCount:7}); }
+function genCompoundWordsA(){ return buildFromBank(bankWordStructure,{easyCount:10,mediumCount:5,challengeCount:5}); }
+function genPrefixesA(){ return buildFromBank(bankWordStructure,{easyCount:5,mediumCount:10,challengeCount:5}); }
+function genSuffixesA(){ return buildFromBank(bankWordStructure,{easyCount:5,mediumCount:10,challengeCount:5}); }
+function genWordStructureMixedA(){ return buildFromBank(bankWordStructure,{easyCount:7,mediumCount:8,challengeCount:5}); }
+function genWordStructureReview(){ return buildFromBank(bankWordStructure,{easyCount:6,mediumCount:8,challengeCount:6}); }
+function genSynonymsA(){ return buildFromBank(bankSynAnt,{easyCount:10,mediumCount:5,challengeCount:5}); }
+function genAntonymsA(){ return buildFromBank(bankSynAnt,{easyCount:5,mediumCount:10,challengeCount:5}); }
+function genSynAntMixedA(){ return buildFromBank(bankSynAnt,{easyCount:7,mediumCount:8,challengeCount:5}); }
+function genSynAntMixedB(){ return buildFromBank(bankSynAnt,{easyCount:6,mediumCount:8,challengeCount:6}); }
+function genWordMeaningReview(){ return buildFromBank(bankSynAnt,{easyCount:6,mediumCount:8,challengeCount:6}); }
+function genELAReviewBalanced1(){
+  return buildElaMission({
+    easy:[...bankNouns().easy,...bankPronouns().easy,...bankVerbs().easy],
+    medium:[...bankNouns().medium,...bankPronouns().medium,...bankVerbs().medium],
+    challenge:[...bankNouns().challenge,...bankPronouns().challenge,...bankVerbs().challenge],
+    easyCount:6,mediumCount:8,challengeCount:6
+  });
+}
+function genELAReviewBalanced2(){
+  return buildElaMission({
+    easy:[...bankSentences().easy,...bankContractions().easy,...bankWordStructure().easy,...bankSynAnt().easy],
+    medium:[...bankSentences().medium,...bankContractions().medium,...bankWordStructure().medium,...bankSynAnt().medium],
+    challenge:[...bankSentences().challenge,...bankContractions().challenge,...bankWordStructure().challenge,...bankSynAnt().challenge],
+    easyCount:6,mediumCount:8,challengeCount:6
+  });
+}
 const elaGenerators=[
   null,
   genNounsMission1,genNounsMission2,genNounsMission3,genNounsMission4,genNounsMission5,
@@ -745,11 +975,11 @@ const elaGenerators=[
   genSV1,genSV2,genSV3,genSV4,genSVReview,
   genAdjectivesA,genComparativesA,genAdverbsA,genAdjAdvCompare,genAdjAdvReview,
   genStatementsQuestions,genExclamationsCommands,genSentenceTypesA,genSentenceTypesB,genSentenceReview,
-  genELAReview1,genELAReview1,genELAReview1,genELAReview1,genELAReview1,
+  genELAReviewBalanced1,genELAReviewBalanced1,genELAReviewBalanced1,genELAReviewBalanced1,genELAReviewBalanced1,
   genContractionsMake,genContractionsExpand,genContractionsMixedA,genContractionsMixedB,genContractionsReview,
   genCompoundWordsA,genPrefixesA,genSuffixesA,genWordStructureMixedA,genWordStructureReview,
   genSynonymsA,genAntonymsA,genSynAntMixedA,genSynAntMixedB,genWordMeaningReview,
-  genELAReview2,genELAReview2,genELAReview2,genELAReview2,genELAReview2,
+  genELAReviewBalanced2,genELAReviewBalanced2,genELAReviewBalanced2,genELAReviewBalanced2,genELAReviewBalanced2,
 ];
 
 const elaMissionInfo=[
