@@ -162,7 +162,7 @@ function closeLockModal(){document.getElementById('lockModal').classList.add('hi
 function submitLockCode(){
   const code=document.getElementById('lockInput').value.trim().toUpperCase();
   if(ME.unlockMission(pendingLock,SUBJECT,code)){closeLockModal();buildGrid();startMission(pendingLock);}
-  else document.getElementById('lockError').textContent='That code is not correct. Ask your teacher!';
+  else document.getElementById('lockError').textContent='This section is still closed. Ask your teacher to use Dev Mode.';
 }
 document.getElementById('lockInput').addEventListener('keydown',e=>{if(e.key==='Enter')submitLockCode();});
 
