@@ -1,6 +1,5 @@
 // Mission Academy - Shared Engine v3
 const TEACHER_CODE = "LAUNCH2024";
-const LOCK_EVERY = 6;
 
 // ─── Audio ─────────────────────────────────────────────────────────────────
 const AudioFX = (() => {
@@ -540,9 +539,49 @@ const elaMissionInfo=[
 function storageKey(subject,name){ return `missionAcademy_${subject}_${(name||'student').replace(/[^a-z0-9]/gi,'_').toLowerCase()}`; }
 function getProgress(subject){ try{return JSON.parse(localStorage.getItem(storageKey(subject,getStudentName()))||'{}');}catch{return{};} }
 function saveProgress(subject,data){ localStorage.setItem(storageKey(subject,getStudentName()),JSON.stringify(data)); }
-function isLocked(n){ return n%LOCK_EVERY===0; }
-function isUnlocked(n,subject){ return !isLocked(n)||!!getProgress(subject)[`unlocked_${n}`]; }
-function unlockMission(n,subject,code){ if(code===TEACHER_CODE){const p=getProgress(subject);p[`unlocked_${n}`]=true;saveProgress(subject,p);return true;}return false; }
+// ─── Section-based locking (driven by config.js) ─────────────────────────
+const SECTION_MAP = {
+  math: [
+    [1,5],[6,10],[11,15],[16,20],[21,25],[26,30]
+  ],
+  ela: [
+    [1,5],[6,11],[12,15],[16,20],[21,25],[26,30],
+    [31,35],[36,40],[41,45],[46,50],[51,55],[56,60]
+  ],
+  reading: [
+    [1,5],[6,10],[11,15],[16,20]
+  ],
+  spelling: [
+    [1,5],[6,10],[11,15],[16,20]
+  ]
+};
+
+function getSectionForMission(subject, n) {
+  const map = SECTION_MAP[subject] || [];
+  for (let i = 0; i < map.length; i++) {
+    if (n >= map[i][0] && n <= map[i][1]) return i + 1; // 1-indexed section number
+  }
+  return 1;
+}
+
+function getOpenSections(subject) {
+  const cfg = window.SITE_CONFIG || {};
+  const key = subject + '_open_sections';
+  return cfg[key] ?? 1;
+}
+
+function isLocked(n, subject) {
+  if (!subject) return false; // fallback: never lock if subject unknown
+  const section = getSectionForMission(subject, n);
+  return section > getOpenSections(subject);
+}
+
+function isUnlocked(n, subject) {
+  return !isLocked(n, subject);
+}
+
+// kept for backwards compatibility — no-op since locking is config-driven
+function unlockMission(n, subject, code) { return code === TEACHER_CODE; }
 function markComplete(n,subject,score){ const p=getProgress(subject);p[`score_${n}`]=score;p[`best_${n}`]=Math.max(score,p[`best_${n}`]||0);saveProgress(subject,p); }
 function getScore(n,subject){ return getProgress(subject)[`score_${n}`]??null; }
 function getBest(n,subject){ return getProgress(subject)[`best_${n}`]??null; }
@@ -564,9 +603,9 @@ function getAllStudentProgress(){
 
 if(typeof window!=='undefined'){
   window.MissionEngine={
-    TEACHER_CODE,LOCK_EVERY,
+    TEACHER_CODE,
     mathGenerators,mathMissionInfo,elaGenerators,elaMissionInfo,
-    getProgress,saveProgress,isLocked,isUnlocked,unlockMission,markComplete,getScore,getBest,
+    getProgress,saveProgress,isLocked,isUnlocked,unlockMission,markComplete,getScore,getBest,getSectionForMission,getOpenSections,
     getAllStudentProgress,getStudentName,setStudentName,
     AudioFX,checkAnswer,randInt,shuffle
   };

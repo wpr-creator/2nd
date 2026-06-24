@@ -200,7 +200,9 @@
   </div>
 </div>
 
+<script src="config.js"></script>
 <script src="engine.js"></script>
+<script src="teacher-panel.js"></script>
 <script>
 // ─── Spelling Word Banks ───────────────────────────────────────────────────
 const SPELL_MISSIONS = [
@@ -514,7 +516,7 @@ function buildGrid(){
     div.innerHTML=`<span>${section.label}</span>`; grid.appendChild(div);
     for(let i=section.from; i<=section.to; i++){
       const n=i+1;
-      const locked=ME.isLocked(n)&&!ME.isUnlocked(n,SUBJECT);
+      const locked=ME.isLocked(n,SUBJECT);
       const best=ME.getBest(n,SUBJECT);
       if(best!==null) totalDone++;
       if(best===10) totalPerf++;

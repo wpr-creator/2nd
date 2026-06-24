@@ -101,7 +101,9 @@
   </div>
 </div>
 
+<script src="config.js"></script>
 <script src="engine.js"></script>
+<script src="teacher-panel.js"></script>
 <script>
 const SUBJECT='math', ME=window.MissionEngine;
 const MAX_LIVES=3;
@@ -131,7 +133,7 @@ function buildGrid(){
     const div=document.createElement('div');div.className='section-label';
     div.innerHTML=`<span>${section.label}</span>`;grid.appendChild(div);
     for(let n=section.from;n<=section.to;n++){
-      const locked=ME.isLocked(n)&&!ME.isUnlocked(n,SUBJECT);
+      const locked=ME.isLocked(n,SUBJECT);
       const best=ME.getBest(n,SUBJECT);
       if(best!==null)totalDone++;if(best===20)totalPerf++;
       const btn=document.createElement('button');
