@@ -23,81 +23,18 @@ const AudioFX = (() => {
     } catch(e) {}
   }
   return {
-    correct()  { if(!isSoundOn()) return; tone(523,'sine',0.12,0.14); tone(659,'sine',0.18,0.14,0.08); tone(784,'sine',0.25,0.12,0.16); },
-    wrong()    { if(!isSoundOn()) return; tone(220,'sawtooth',0.18,0.1); tone(180,'sawtooth',0.22,0.08,0.1); },
-    streak()   { if(!isSoundOn()) return; [523,659,784,1047].forEach((f,i)=>tone(f,'sine',0.2,0.16,i*0.07)); },
-    complete() { if(!isSoundOn()) return; [523,659,784,1047].forEach((f,i)=>tone(f,'sine',0.3,0.14,i*0.09)); },
-    perfect()  { if(!isSoundOn()) return; [523,659,784,1047,1319].forEach((f,i)=>tone(f,'sine',0.35,0.14,i*0.08)); },
-    hint()     { if(!isSoundOn()) return; tone(440,'sine',0.15,0.1); tone(554,'sine',0.2,0.1,0.12); }
+    correct()  { tone(523,'sine',0.12,0.14); tone(659,'sine',0.18,0.14,0.08); tone(784,'sine',0.25,0.12,0.16); },
+    wrong()    { tone(220,'sawtooth',0.18,0.1); tone(180,'sawtooth',0.22,0.08,0.1); },
+    streak()   { [523,659,784,1047].forEach((f,i)=>tone(f,'sine',0.2,0.16,i*0.07)); },
+    complete() { [523,659,784,1047].forEach((f,i)=>tone(f,'sine',0.3,0.14,i*0.09)); },
+    perfect()  { [523,659,784,1047,1319].forEach((f,i)=>tone(f,'sine',0.35,0.14,i*0.08)); },
+    hint()     { tone(440,'sine',0.15,0.1); tone(554,'sine',0.2,0.1,0.12); }
   };
 })();
 
-// ─── Student Profile / Falcon Identity ─────────────────────────────────────
-const FALCON_AVATARS = [
-  { id:'rookie',   emoji:'🦅', name:'Rookie Falcon',   motto:'Ready for takeoff!' },
-  { id:'reader',   emoji:'📚', name:'Reading Falcon',  motto:'Strong readers soar.' },
-  { id:'math',     emoji:'➕', name:'Math Falcon',     motto:'Number power!' },
-  { id:'explorer', emoji:'🧭', name:'Explorer Falcon', motto:'Curious and brave.' },
-  { id:'captain',  emoji:'⭐', name:'Captain Falcon',  motto:'Lead the flight!' },
-  { id:'sky',      emoji:'☁️', name:'Sky Falcon',      motto:'Keep climbing.' }
-];
-
-function safeStudentName(name){ return (name||'student').replace(/[^a-z0-9]/gi,'_').toLowerCase(); }
-function profileKey(name){ return `missionAcademy_profile_${safeStudentName(name||getStudentName())}`; }
-function getAvatarChoice(id){ return FALCON_AVATARS.find(a=>a.id===id) || FALCON_AVATARS[0]; }
-
-function defaultProfile(name='') {
-  return {
-    name: (name||'').trim(),
-    avatar: 'rookie',
-    xp: 0,
-    badges: [],
-    sound: true,
-    readingLevel: localStorage.getItem('missionAcademy_readingLevel') || '2'
-  };
-}
-
-function getProfile(name=getStudentName()) {
-  const cleanName = (name||'').trim();
-  if(!cleanName) return defaultProfile('');
-  try {
-    const saved = JSON.parse(localStorage.getItem(profileKey(cleanName)) || '{}');
-    return { ...defaultProfile(cleanName), ...saved, name: cleanName };
-  } catch {
-    return defaultProfile(cleanName);
-  }
-}
-
-function saveProfile(profile) {
-  const p = { ...defaultProfile(profile?.name), ...(profile||{}) };
-  p.name = (p.name || getStudentName() || '').trim();
-  if(!p.name) return p;
-  localStorage.setItem(profileKey(p.name), JSON.stringify(p));
-  return p;
-}
-
+// ─── Student Name ──────────────────────────────────────────────────────────
 function getStudentName() { return localStorage.getItem('missionAcademy_studentName') || ''; }
-function setStudentName(name) {
-  const clean = (name||'').trim();
-  localStorage.setItem('missionAcademy_studentName', clean);
-  if(clean) saveProfile(getProfile(clean));
-}
-function setAvatar(id) { const p=getProfile(); p.avatar=getAvatarChoice(id).id; return saveProfile(p); }
-function getAvatar(id=null) { return getAvatarChoice(id || getProfile().avatar); }
-function isSoundOn() { return getProfile().sound !== false; }
-function setSoundOn(value) { const p=getProfile(); p.sound=!!value; return saveProfile(p); }
-function toggleSound() { const p=getProfile(); p.sound = p.sound === false; return saveProfile(p).sound; }
-function getReadingLevel(){ return String(getProfile().readingLevel || localStorage.getItem('missionAcademy_readingLevel') || '2'); }
-function setReadingLevelPreference(level){ const p=getProfile(); p.readingLevel=String(level); localStorage.setItem('missionAcademy_readingLevel', String(level)); saveProfile(p); return p.readingLevel; }
-function getRank(xp=(getProfile().xp||0)) {
-  if(xp>=1000) return 'Falcon Legend';
-  if(xp>=500) return 'Mountain Soarer';
-  if(xp>=250) return 'Sky Explorer';
-  if(xp>=100) return 'Falcon Flyer';
-  return 'Nest Cadet';
-}
-function addXP(amount) { const p=getProfile(); p.xp=(p.xp||0)+Number(amount||0); saveProfile(p); return p.xp; }
-function awardBadge(id) { const p=getProfile(); p.badges=Array.isArray(p.badges)?p.badges:[]; if(id && !p.badges.includes(id)) p.badges.push(id); saveProfile(p); return p.badges; }
+function setStudentName(name) { localStorage.setItem('missionAcademy_studentName', name.trim()); }
 
 // ─── Helpers ───────────────────────────────────────────────────────────────
 function randInt(min, max) { return Math.floor(Math.random() * (max - min + 1)) + min; }
@@ -566,420 +503,20 @@ function genELAReview2() {
   return shuffle([...genSentenceTypes(),...genContractions(),...genWordStructure(),...genSynonymsAntonyms()]).slice(0,20);
 }
 
-
-
-// ─── ELA Mission Variety Layer ─────────────────────────────────────────────
-// These wrappers keep the same standards/topics, but add mission-specific pools
-// so missions in the same category do not feel like the exact same quiz.
-function qChoice(q, answer, choices, hint){ return {q, answer, type:'choice', choices, hint}; }
-function qShort(q, answer, hint, alternates=[]){ return {q, answer, alternates, type:'short', hint}; }
-function varied(baseFn, extras){ return shuffle([...(baseFn ? baseFn() : []), ...(extras || [])]).slice(0,20); }
-
-const NOUN_COMMON_PROPER_EXTRA_A = [
-  qChoice('Is "library" a common noun or a proper noun?','common noun',['common noun','proper noun'],'Library is a general place, not a specific name.'),
-  qChoice('Is "San Diego" a common noun or a proper noun?','proper noun',['common noun','proper noun'],'San Diego names one specific city.'),
-  qChoice('Is "school" a common noun or a proper noun?','common noun',['common noun','proper noun'],'School is a general place.'),
-  qChoice('Is "Falcon Academy" a common noun or a proper noun?','proper noun',['common noun','proper noun'],'Falcon Academy names one specific school.'),
-  qChoice('In "The class visited Balboa Park," what kind of noun is "Balboa Park"?','proper noun',['common noun','proper noun'],'It names one specific place.'),
-  qChoice('In "My cousin rides the bus," what kind of noun is "cousin"?','common noun',['common noun','proper noun'],'Cousin is a general person.'),
-  qChoice('Choose the proper noun.','Wednesday',['teacher','Wednesday','playground','pencil'],'Days of the week are proper nouns.'),
-  qChoice('Choose the common noun.','river',['Colorado River','Maya','river','December'],'River is a general thing.'),
-];
-const NOUN_COMMON_PROPER_EXTRA_B = [
-  qChoice('Is "doctor" a common noun or a proper noun?','common noun',['common noun','proper noun'],'Doctor is a general person.'),
-  qChoice('Is "Dr. Ramos" a common noun or a proper noun?','proper noun',['common noun','proper noun'],'Dr. Ramos names one specific person.'),
-  qChoice('Is "restaurant" a common noun or a proper noun?','common noun',['common noun','proper noun'],'Restaurant is a general place.'),
-  qChoice('Is "In-N-Out" a common noun or a proper noun?','proper noun',['common noun','proper noun'],'It is the name of a specific place.'),
-  qChoice('Choose the proper noun.','January',['month','January','calendar','holiday'],'Months are proper nouns.'),
-  qChoice('Choose the common noun.','dog',['Spot','California','dog','Monday'],'Dog is a general animal.'),
-  qChoice('In "Ava packed her lunch," what kind of noun is "Ava"?','proper noun',['common noun','proper noun'],'Ava names a specific person.'),
-  qChoice('In "The team won the game," what kind of noun is "team"?','common noun',['common noun','proper noun'],'Team is a general group.'),
-];
-const PLURAL_EXTRA_A = [
-  qShort('What is the plural of "wish"?','wishes','Words ending in sh usually add -es.'),
-  qShort('What is the plural of "lunch"?','lunches','Words ending in ch usually add -es.'),
-  qShort('What is the plural of "toy"?','toys','For vowel + y, just add -s.'),
-  qShort('What is the plural of "key"?','keys','For vowel + y, just add -s.'),
-  qShort('What is the plural of "story"?','stories','Change y to i and add -es.'),
-  qShort('What is the plural of "party"?','parties','Change y to i and add -es.'),
-  qChoice('Which word is plural?','benches',['bench','benches','class','fox'],'Benches means more than one bench.'),
-  qChoice('Which word is singular?','baby',['babies','classes','baby','buses'],'Baby means one.'),
-];
-const PLURAL_EXTRA_B = [
-  qShort('What is the plural of "church"?','churches','Words ending in ch usually add -es.'),
-  qShort('What is the plural of "match"?','matches','Words ending in ch usually add -es.'),
-  qShort('What is the plural of "tray"?','trays','For vowel + y, just add -s.'),
-  qShort('What is the plural of "penny"?','pennies','Change y to i and add -es.'),
-  qShort('What is the plural of "family"?','families','Change y to i and add -es.'),
-  qShort('What is the plural of "tomato"?','tomatoes','Some words ending in o add -es.'),
-  qChoice('Choose the correct plural: one box, two ___.','boxes',['boxs','boxies','boxes','box'],'Box ends in x, so add -es.'),
-  qChoice('Choose the correct plural: one puppy, three ___.','puppies',['puppys','puppies','puppy','puppyes'],'Change y to i and add -es.'),
-];
-function genNounsMission1(){ return varied(null, [...NOUN_COMMON_PROPER_EXTRA_A, ...NOUN_COMMON_PROPER_EXTRA_B, ...shuffle(genNouns()).slice(0,8)]); }
-function genNounsMission2(){ return varied(null, [...NOUN_COMMON_PROPER_EXTRA_B, ...NOUN_COMMON_PROPER_EXTRA_A, ...shuffle(genNouns()).slice(0,8)]); }
-function genNounsMission3(){ return varied(null, [...PLURAL_EXTRA_A, ...shuffle(genNouns()).slice(0,10)]); }
-function genNounsMission4(){ return varied(null, [...PLURAL_EXTRA_B, ...shuffle(genNouns()).slice(0,10)]); }
-function genNounsMission5(){ return varied(null, [...NOUN_COMMON_PROPER_EXTRA_A.slice(0,4), ...NOUN_COMMON_PROPER_EXTRA_B.slice(0,4), ...PLURAL_EXTRA_A.slice(0,4), ...PLURAL_EXTRA_B.slice(0,4), ...shuffle(genNouns()).slice(0,8)]); }
-
-const POSSESSIVE_EXTRA = [
-  qShort('Make "bird" possessive.','bird\'s','Add apostrophe s to show ownership.'),
-  qShort('Make "mom" possessive.','mom\'s','Add apostrophe s.'),
-  qShort('Make "students" possessive.','students\'','Plural nouns ending in s usually add only an apostrophe.'),
-  qShort('Make "teachers" possessive.','teachers\'','Plural nouns ending in s usually add only an apostrophe.'),
-  qChoice('Choose the possessive noun: The ___ backpack is blue.','girl\'s',['girls','girl\'s','girl','girlses'],'The backpack belongs to the girl.'),
-  qChoice('Choose the possessive noun: The ___ desks are clean.','students\'',['student','students','students\'','studentes'],'The desks belong to many students.'),
-];
-const IRREGULAR_EXTRA = [
-  qShort('What is the irregular plural of "person"?','people','Person changes to people.'),
-  qShort('What is the irregular plural of "child"?','children','Child changes to children.'),
-  qShort('What is the irregular plural of "mouse"?','mice','Mouse changes to mice.'),
-  qShort('What is the irregular plural of "tooth"?','teeth','Tooth changes to teeth.'),
-  qShort('What is the irregular plural of "foot"?','feet','Foot changes to feet.'),
-  qChoice('Choose the correct plural: one goose, two ___.','geese',['gooses','geese','goose','goosies'],'Goose changes to geese.'),
-];
-function genPossessiveA(){ return varied(genPossessiveIrregular, POSSESSIVE_EXTRA); }
-function genPossessiveB(){ return varied(null, [...POSSESSIVE_EXTRA, ...shuffle(genPossessiveIrregular()).filter(x=>/possessive|belongs|ownership|apostrophe|Make/.test(x.q+x.hint)).slice(0,14)]); }
-function genIrregularA(){ return varied(null, [...IRREGULAR_EXTRA, ...shuffle(genPossessiveIrregular()).filter(x=>/irregular plural|plural/.test(x.q+x.hint)).slice(0,14)]); }
-function genIrregularB(){ return varied(genPossessiveIrregular, IRREGULAR_EXTRA); }
-function genPossessiveIrregularReview(){ return varied(null, [...POSSESSIVE_EXTRA, ...IRREGULAR_EXTRA, ...shuffle(genPossessiveIrregular()).slice(0,10)]); }
-
-const PRONOUN_EXTRA = [
-  qChoice('Replace the subject: "Carlos rides his bike."','He',['He','She','They','We'],'Carlos is one boy.'),
-  qChoice('Replace the subject: "The kittens are sleeping."','They',['It','They','She','He'],'Kittens means more than one.'),
-  qChoice('Replace the subject: "My friend and I cleaned up."','We',['They','We','He','It'],'I plus another person = we.'),
-  qChoice('Replace the subject: "The pencil fell."','It',['He','She','They','It'],'A pencil is a thing.'),
-  qShort('What reflexive pronoun goes with "they"?','themselves','They → themselves'),
-  qShort('What reflexive pronoun goes with "she"?','herself','She → herself'),
-];
-const SUBJECT_PRED_EXTRA = [
-  qShort('In "The sleepy dog yawned," what is the subject?','The sleepy dog','The subject is who or what the sentence is about.'),
-  qShort('In "The sleepy dog yawned," what is the predicate?','yawned','The predicate tells what the subject did.'),
-  qShort('In "Our class read a story," what is the subject?','Our class','The subject is who or what the sentence is about.'),
-  qShort('In "Our class read a story," what is the predicate?','read a story','The predicate tells what the subject did.'),
-];
-function genPronounsA(){ return varied(genPronouns, PRONOUN_EXTRA); }
-function genPronounsB(){ return varied(null, [...PRONOUN_EXTRA, ...shuffle(genPronouns()).filter(x=>/reflexive/.test(x.q+x.hint)).slice(0,14)]); }
-function genSubjectPredicateA(){ return varied(null, [...SUBJECT_PRED_EXTRA, ...shuffle(genPronouns()).filter(x=>/SUBJECT|PREDICATE|subject|predicate/.test(x.q+x.hint)).slice(0,16)]); }
-function genPronounsReview(){ return varied(null, [...PRONOUN_EXTRA, ...SUBJECT_PRED_EXTRA, ...shuffle(genPronouns()).slice(0,10)]); }
-
-const VERB_EXTRA = [
-  qShort('What is the PAST tense of "skip"?','skipped','Double the p and add -ed.'),
-  qShort('What is the PAST tense of "study"?','studied','Change y to i and add -ed.'),
-  qShort('What is the FUTURE tense of "paint"?','will paint','Future tense uses will.'),
-  qShort('What is the FUTURE tense of "share"?','will share','Future tense uses will.'),
-  qChoice('What tense is used? "She will bake cookies."','future',['past','present','future'],'Will means future.'),
-  qChoice('What tense is used? "He kicked the ball."','past',['past','present','future'],'Kicked already happened.'),
-  qChoice('What tense is used? "Birds fly in the sky."','present',['past','present','future'],'This tells what happens now or regularly.'),
-];
-function genVerbAction(){ return varied(genVerbTense, VERB_EXTRA.filter(x=>/PAST|kicked|already/.test(x.q+x.hint))); }
-function genVerbPast(){ return varied(null, [...VERB_EXTRA.filter(x=>/PAST|past|already|kicked/.test(x.q+x.hint)), ...shuffle(genVerbTense()).slice(0,14)]); }
-function genVerbFuturePresent(){ return varied(null, [...VERB_EXTRA.filter(x=>/FUTURE|future|present|will/.test(x.q+x.hint)), ...shuffle(genVerbTense()).slice(0,14)]); }
-function genVerbMixed(){ return varied(genVerbTense, VERB_EXTRA); }
-function genVerbReview(){ return varied(null, [...VERB_EXTRA, ...shuffle(genVerbTense()).slice(0,14)]); }
-
-const SV_EXTRA = [
-  qChoice('Choose the correct verb: "The rabbit ___ quickly."','hops',['hop','hops'],'Rabbit is singular.'),
-  qChoice('Choose the correct verb: "The rabbits ___ quickly."','hop',['hop','hops'],'Rabbits is plural.'),
-  qChoice('Choose the correct verb: "My brother ___ jokes."','tells',['tell','tells'],'Brother is singular.'),
-  qChoice('Choose the correct verb: "My friends ___ jokes."','tell',['tell','tells'],'Friends is plural.'),
-  qChoice('Choose the correct verb: "We ___ our desks."','clean',['clean','cleans'],'We uses clean.'),
-  qChoice('Choose the correct verb: "She ___ her desk."','cleans',['clean','cleans'],'She uses cleans.'),
-];
-function genSV1(){ return varied(genSVAgreement, SV_EXTRA.slice(0,3)); }
-function genSV2(){ return varied(genSVAgreement, SV_EXTRA.slice(3)); }
-function genSV3(){ return varied(null, [...SV_EXTRA, ...shuffle(genSVAgreement()).slice(0,14)]); }
-function genSV4(){ return varied(genSVAgreement, shuffle(SV_EXTRA)); }
-function genSVReview(){ return varied(null, [...SV_EXTRA, ...shuffle(genSVAgreement()).slice(0,14)]); }
-
-const ADJ_ADV_EXTRA = [
-  qChoice('In "The shiny coin sparkled," is "shiny" an adjective or adverb?','adjective',['adjective','adverb'],'Shiny describes the coin.'),
-  qChoice('In "The turtle moved slowly," is "slowly" an adjective or adverb?','adverb',['adjective','adverb'],'Slowly tells how the turtle moved.'),
-  qShort('What is the comparative form of "funny"?','funnier','Change y to i and add -er.'),
-  qShort('What is the comparative form of "thin"?','thinner','Double the n and add -er.'),
-  qChoice('Which word is an adjective?','green',['quickly','green','softly','loudly'],'Green describes a noun.'),
-  qChoice('Which word is an adverb?','carefully',['careful','carefully','bright','tiny'],'Carefully tells how something is done.'),
-];
-function genAdjectivesA(){ return varied(genAdjectivesAdverbs, ADJ_ADV_EXTRA.filter(x=>/adjective|describes|comparative/.test(x.q+x.hint))); }
-function genComparativesA(){ return varied(null, [...ADJ_ADV_EXTRA.filter(x=>/comparative|add -er|funnier|thinner/.test(x.q+x.hint)), ...shuffle(genAdjectivesAdverbs()).slice(0,14)]); }
-function genAdverbsA(){ return varied(null, [...ADJ_ADV_EXTRA.filter(x=>/adverb|how/.test(x.q+x.hint)), ...shuffle(genAdjectivesAdverbs()).slice(0,14)]); }
-function genAdjAdvCompare(){ return varied(genAdjectivesAdverbs, ADJ_ADV_EXTRA); }
-function genAdjAdvReview(){ return varied(null, [...ADJ_ADV_EXTRA, ...shuffle(genAdjectivesAdverbs()).slice(0,14)]); }
-
-const SENTENCE_EXTRA = [
-  qChoice('What type of sentence is this? "Please pass the crayons."','command',['statement','question','command','exclamation'],'It tells someone what to do.'),
-  qChoice('What type of sentence is this? "Why is the sky orange?"','question',['statement','question','command','exclamation'],'It asks something.'),
-  qChoice('What type of sentence is this? "That roller coaster was amazing!"','exclamation',['statement','question','command','exclamation'],'It shows strong feeling.'),
-  qChoice('What type of sentence is this? "The library opens at nine."','statement',['statement','question','command','exclamation'],'It tells information.'),
-  qChoice('Which sentence is a command?','Close your book.',['The book is red.','Close your book.','Where is the book?','What a great book!'],'A command tells someone what to do.'),
-  qChoice('Which sentence is a question?','Are you ready?',['I am ready.','Be ready.','Are you ready?','I am so ready!'],'A question asks something.'),
-];
-function genStatementsQuestions(){ return varied(null, [...SENTENCE_EXTRA.filter(x=>/question|statement|asks|information/.test(x.q+x.hint)), ...shuffle(genSentenceTypes()).slice(0,14)]); }
-function genExclamationsCommands(){ return varied(null, [...SENTENCE_EXTRA.filter(x=>/command|exclamation|strong feeling|tells someone/.test(x.q+x.hint)), ...shuffle(genSentenceTypes()).slice(0,14)]); }
-function genSentenceTypesA(){ return varied(genSentenceTypes, SENTENCE_EXTRA.slice(0,3)); }
-function genSentenceTypesB(){ return varied(genSentenceTypes, SENTENCE_EXTRA.slice(3)); }
-function genSentenceReview(){ return varied(null, [...SENTENCE_EXTRA, ...shuffle(genSentenceTypes()).slice(0,14)]); }
-
-function genContractionsMake(){ return varied(genContractions, [qShort('Make a contraction: "they will"','they\'ll','They will → they\'ll'), qShort('Make a contraction: "we will"','we\'ll','We will → we\'ll'), qShort('Make a contraction: "you will"','you\'ll','You will → you\'ll')]); }
-function genContractionsExpand(){ return varied(genContractions, [qShort('Expand the contraction: "they\'ll"','they will','The apostrophe replaces missing letters.'), qShort('Expand the contraction: "we\'ll"','we will','The apostrophe replaces missing letters.'), qShort('Expand the contraction: "you\'ll"','you will','The apostrophe replaces missing letters.')]); }
-function genContractionsMixedA(){ return varied(genContractions, [qShort('Make a contraction: "let us"','let\'s','Let us → let\'s'), qShort('Expand the contraction: "let\'s"','let us','The apostrophe replaces missing letters.')]); }
-function genContractionsMixedB(){ return varied(genContractions, [qShort('Make a contraction: "does not"','doesn\'t','Does not → doesn\'t'), qShort('Expand the contraction: "doesn\'t"','does not','The apostrophe replaces missing letters.')]); }
-function genContractionsReview(){ return varied(genContractions, []); }
-
-function genCompoundWordsA(){ return varied(genWordStructure, [qShort('Combine "cup" and "cake".','cupcake','Cup + cake = cupcake'), qShort('Combine "foot" and "ball".','football','Foot + ball = football'), qShort('Combine "pop" and "corn".','popcorn','Pop + corn = popcorn')]); }
-function genPrefixesA(){ return varied(genWordStructure, [qShort('Add the prefix "pre-" to "heat".','preheat','Pre- means before.'), qShort('Add the prefix "mis-" to "spell".','misspell','Mis- means wrong or badly.')]); }
-function genSuffixesA(){ return varied(genWordStructure, [qShort('Add "-er" to "read".','reader','Reader means one who reads.'), qShort('Add "-ful" to "hope".','hopeful','Hopeful means full of hope.')]); }
-function genWordStructureMixedA(){ return varied(genWordStructure, [qShort('Add the prefix "re-" to "play".','replay','Re- means again.'), qShort('Combine "note" and "book".','notebook','Note + book = notebook')]); }
-function genWordStructureReview(){ return varied(genWordStructure, []); }
-
-function genSynonymsA(){ return varied(genSynonymsAntonyms, [qShort('What is a synonym for "angry"?','mad','Synonym means same or almost the same.', ['upset','furious']), qShort('What is a synonym for "small"?','tiny','Synonym means same or almost the same.', ['little'])]); }
-function genAntonymsA(){ return varied(genSynonymsAntonyms, [qShort('What is an antonym for "near"?','far','Antonym means opposite.'), qShort('What is an antonym for "early"?','late','Antonym means opposite.')]); }
-function genSynAntMixedA(){ return varied(genSynonymsAntonyms, [qShort('What is a synonym for "sick"?','ill','Synonym means same or almost the same.'), qShort('What is an antonym for "empty"?','full','Antonym means opposite.')]); }
-function genSynAntMixedB(){ return varied(genSynonymsAntonyms, [qShort('What is a synonym for "quick"?','fast','Synonym means same or almost the same.'), qShort('What is an antonym for "first"?','last','Antonym means opposite.')]); }
-function genWordMeaningReview(){ return varied(genSynonymsAntonyms, []); }
-
-
-// ─── Balanced ELA Mission Builder ──────────────────────────────────────────
-// Builds each ELA mission from a larger, mixed pool so missions teach the
-// same topic without repeating the same exact question set.
-function questionId(item){
-  return String((item.q||'') + '|' + (item.answer||'')).toLowerCase().replace(/\s+/g,' ').trim();
-}
-function uniqueQuestions(items){
-  const seen=new Set(), out=[];
-  for(const item of items){
-    if(!item || !item.q || item.answer===undefined) continue;
-    const id=questionId(item);
-    if(seen.has(id)) continue;
-    seen.add(id); out.push(item);
-  }
-  return out;
-}
-function repeatBank(fn, times=4){
-  let out=[];
-  for(let i=0;i<times;i++) out = out.concat(fn());
-  return out;
-}
-function getRecentQuestionIds(subject){
-  try { return JSON.parse(localStorage.getItem(`missionAcademy_recentQuestions_${subject}`)||'[]'); }
-  catch { return []; }
-}
-function saveRecentQuestionIds(subject, ids){
-  localStorage.setItem(`missionAcademy_recentQuestions_${subject}`, JSON.stringify(ids.slice(-120)));
-}
-function pickBalanced(pool, count, avoidSet){
-  const unique=uniqueQuestions(pool);
-  const fresh=shuffle(unique.filter(q=>!avoidSet.has(questionId(q))));
-  const fallback=shuffle(unique.filter(q=>avoidSet.has(questionId(q))));
-  return [...fresh, ...fallback].slice(0,count);
-}
-function buildElaMission(parts, total=20){
-  const recent=new Set(getRecentQuestionIds('ela'));
-  let mission=[];
-  const buckets=[
-    ['easy', Math.max(0, parts.easyCount ?? 8)],
-    ['medium', Math.max(0, parts.mediumCount ?? 8)],
-    ['challenge', Math.max(0, parts.challengeCount ?? 4)]
-  ];
-  for(const [key,count] of buckets){
-    const picked=pickBalanced(parts[key]||[], count, recent);
-    mission = mission.concat(picked);
-    picked.forEach(q=>recent.add(questionId(q)));
-  }
-  if(mission.length < total){
-    const all=[...(parts.easy||[]), ...(parts.medium||[]), ...(parts.challenge||[]), ...(parts.extra||[])];
-    mission = mission.concat(pickBalanced(all, total-mission.length, new Set(mission.map(questionId))));
-  }
-  mission=shuffle(uniqueQuestions(mission)).slice(0,total);
-  saveRecentQuestionIds('ela', [...getRecentQuestionIds('ela'), ...mission.map(questionId)]);
-  return mission;
-}
-function byText(items, pattern){ return items.filter(x=>pattern.test((x.q||'')+' '+(x.hint||'')+' '+(x.answer||''))); }
-function qFindNoun(sentence, answer, hint){ return qChoice(`Which word is a noun in this sentence? "${sentence}"`, answer, shuffle([answer,'quickly','runs','very']).slice(0,4), hint); }
-
-const NOUN_EXTRA_WIDE = [
-  qFindNoun('The eagle flew over the school.', 'eagle', 'A noun names a person, place, thing, or animal.'),
-  qFindNoun('Jayden opened his backpack.', 'backpack', 'Backpack is a thing.'),
-  qFindNoun('The garden has red flowers.', 'garden', 'Garden is a place.'),
-  qChoice('Choose the proper noun.', 'Ms. Chen', ['teacher','school','Ms. Chen','city'], 'A proper noun names one specific person, place, or thing.'),
-  qChoice('Choose the common noun.', 'park', ['Balboa Park','Friday','park','Sofia'], 'A common noun is a general person, place, or thing.'),
-  qChoice('Which noun should begin with a capital letter?', 'california', ['desk','california','pencil','teacher'], 'A state name is a proper noun.'),
-  qChoice('Which noun should begin with a capital letter?', 'tuesday', ['tuesday','chair','book','dog'], 'Days of the week are proper nouns.'),
-  qShort('What is the plural of "brush"?', 'brushes', 'Words ending in sh add -es.'),
-  qShort('What is the plural of "dish"?', 'dishes', 'Words ending in sh add -es.'),
-  qShort('What is the plural of "berry"?', 'berries', 'Change y to i and add -es.'),
-  qShort('What is the plural of "monkey"?', 'monkeys', 'Vowel + y usually just adds -s.'),
-  qChoice('Choose the correct plural: one class, two ___.', 'classes', ['classs','classes','classies','class'], 'Class ends in s, so add -es.'),
-  qChoice('Choose the correct plural: one baby, three ___.', 'babies', ['babys','babies','babyes','baby'], 'Change y to i and add -es.')
-];
-const POSSESSIVE_IRREGULAR_WIDE = [
-  qChoice('Choose the possessive noun: The ___ tail is fluffy.', "cat's", ['cat','cats',"cat's",'catses'], 'The tail belongs to one cat.'),
-  qChoice('Choose the possessive noun: The ___ lunches are on the table.', "children's", ['childrens','children',"children's",'childrens\''], 'Children is irregular, then add apostrophe s.'),
-  qShort('Make "team" possessive.', "team's", 'Add apostrophe s.'),
-  qShort('Make "boys" possessive.', "boys'", 'Plural nouns ending in s add only an apostrophe.'),
-  qShort('What is the irregular plural of "woman"?', 'women', 'Woman changes to women.'),
-  qShort('What is the irregular plural of "man"?', 'men', 'Man changes to men.'),
-  qShort('What is the irregular plural of "leaf"?', 'leaves', 'Change f to v and add -es.'),
-  qChoice('Choose the correct plural: one wolf, two ___.', 'wolves', ['wolfs','wolves','wolfes','wolf'], 'Change f to v and add -es.')
-];
-const PRONOUN_PREDICATE_WIDE = [
-  qChoice('Replace the subject: "Aaliyah and Noor made a poster."', 'They', ['She','They','It','He'], 'Two people = they.'),
-  qChoice('Replace the subject: "The lunchbox is blue."', 'It', ['He','She','They','It'], 'A lunchbox is a thing.'),
-  qShort('What reflexive pronoun goes with "we"?', 'ourselves', 'We → ourselves'),
-  qShort('What reflexive pronoun goes with "I"?', 'myself', 'I → myself'),
-  qShort('In "The bright kite flew high," what is the subject?', 'The bright kite', 'The subject is who or what the sentence is about.'),
-  qShort('In "The bright kite flew high," what is the predicate?', 'flew high', 'The predicate tells what the subject did.'),
-  qShort('In "My friends played tag," what is the subject?', 'My friends', 'The subject is who or what the sentence is about.'),
-  qShort('In "My friends played tag," what is the predicate?', 'played tag', 'The predicate tells what the subject did.')
-];
-const VERB_WIDE = [
-  qChoice('Which word is the action verb? "The falcon soars above the field."', 'soars', ['falcon','above','soars','field'], 'The action is what the falcon does.'),
-  qChoice('Which word is the action verb? "Nina builds a tower."', 'builds', ['Nina','builds','tower','a'], 'The action is what Nina does.'),
-  qShort('What is the PAST tense of "carry"?', 'carried', 'Change y to i and add -ed.'),
-  qShort('What is the PAST tense of "drop"?', 'dropped', 'Double the p and add -ed.'),
-  qShort('What is the FUTURE tense of "jump"?', 'will jump', 'Future tense uses will.'),
-  qChoice('What tense is used? "They are drawing maps."', 'present', ['past','present','future'], 'Are drawing is happening now.'),
-  qChoice('What tense is used? "We will visit the library."', 'future', ['past','present','future'], 'Will means future.')
-];
-const SV_WIDE = [
-  qChoice('Choose the correct verb: "The cars ___ fast."', 'move', ['move','moves'], 'Cars is plural.'),
-  qChoice('Choose the correct verb: "The car ___ fast."', 'moves', ['move','moves'], 'Car is singular.'),
-  qChoice('Choose the correct verb: "They ___ kind."', 'are', ['is','are'], 'They uses are.'),
-  qChoice('Choose the correct verb: "He ___ kind."', 'is', ['is','are'], 'He uses is.'),
-  qChoice('Choose the correct verb: "The birds ___ in the tree."', 'sit', ['sit','sits'], 'Birds is plural.'),
-  qChoice('Choose the correct verb: "A bird ___ in the tree."', 'sits', ['sit','sits'], 'A bird is singular.')
-];
-const ADJ_ADV_WIDE = [
-  qChoice('Which word is an adjective? "The soft blanket is warm."', 'soft', ['soft','is','warmly','sleep'], 'Soft describes blanket.'),
-  qChoice('Which word is an adverb? "Milo whispered quietly."', 'quietly', ['Milo','whispered','quietly','voice'], 'Quietly tells how Milo whispered.'),
-  qShort('What is the comparative form of "happy"?', 'happier', 'Change y to i and add -er.'),
-  qShort('What is the comparative form of "wide"?', 'wider', 'Add -r to wide.'),
-  qChoice('In "The bird sang sweetly," is "sweetly" an adjective or adverb?', 'adverb', ['adjective','adverb'], 'Sweetly tells how the bird sang.'),
-  qChoice('In "The silver moon glowed," is "silver" an adjective or adverb?', 'adjective', ['adjective','adverb'], 'Silver describes moon.')
-];
-const SENTENCE_WIDE = [
-  qChoice('Which sentence is a statement?', 'The bell rang at noon.', ['The bell rang at noon.','Did the bell ring?','Ring the bell.','What a loud bell!'], 'A statement tells information.'),
-  qChoice('Which sentence is an exclamation?', 'That was incredible!', ['That was incredible!','Was that incredible?','That was a game.','Walk over here.'], 'An exclamation shows strong feeling.'),
-  qChoice('What punctuation should end this sentence? "Where is my pencil"', '?', ['.','?','!'], 'This sentence asks a question.'),
-  qChoice('What punctuation should end this sentence? "Please open your notebook"', '.', ['.','?','!'], 'A polite command can end with a period.'),
-  qChoice('What type of sentence is this? "Line up by the door."', 'command', ['statement','question','command','exclamation'], 'It tells someone what to do.')
-];
-const CONTRACTION_WIDE = [
-  qShort('Make a contraction: "there is"', "there's", 'There is → there\'s'),
-  qShort('Make a contraction: "that is"', "that's", 'That is → that\'s'),
-  qShort('Make a contraction: "who is"', "who's", 'Who is → who\'s'),
-  qShort('Expand the contraction: "she\'ll"', 'she will', 'The apostrophe replaces missing letters.'),
-  qShort('Expand the contraction: "he\'ll"', 'he will', 'The apostrophe replaces missing letters.'),
-  qShort('Expand the contraction: "they\'ve"', 'they have', 'The apostrophe replaces missing letters.')
-];
-const WORD_STRUCTURE_WIDE = [
-  qShort('Combine "star" and "fish".', 'starfish', 'Star + fish = starfish'),
-  qShort('Combine "basket" and "ball".', 'basketball', 'Basket + ball = basketball'),
-  qShort('Add the prefix "dis-" to "agree".', 'disagree', 'Dis- can mean not or opposite.'),
-  qShort('Add the prefix "un-" to "fair".', 'unfair', 'Un- means not.'),
-  qShort('Add "-less" to "fear".', 'fearless', 'Less means without.'),
-  qShort('Add "-ful" to "thank".', 'thankful', 'Ful means full of.')
-];
-const SYN_ANT_WIDE = [
-  qShort('What is a synonym for "glad"?', 'happy', 'A synonym means the same or almost the same.', ['joyful','pleased']),
-  qShort('What is a synonym for "silent"?', 'quiet', 'A synonym means the same or almost the same.'),
-  qShort('What is a synonym for "large"?', 'big', 'A synonym means the same or almost the same.', ['huge']),
-  qShort('What is an antonym for "brave"?', 'scared', 'An antonym means opposite.', ['afraid','fearful']),
-  qShort('What is an antonym for "inside"?', 'outside', 'An antonym means opposite.'),
-  qShort('What is an antonym for "remember"?', 'forget', 'An antonym means opposite.')
-];
-
-function bankNouns(){ const base=repeatBank(genNouns,5); return {easy:[...byText(base,/common noun|proper noun|Choose the proper|Choose the common/i),...NOUN_COMMON_PROPER_EXTRA_A,...NOUN_COMMON_PROPER_EXTRA_B], medium:[...byText(base,/plural|singular/i),...PLURAL_EXTRA_A,...PLURAL_EXTRA_B], challenge:[...NOUN_EXTRA_WIDE]}; }
-function bankPossessiveIrregular(){ const base=repeatBank(genPossessiveIrregular,5); return {easy:[...byText(base,/possessive|Make/i),...POSSESSIVE_EXTRA], medium:[...byText(base,/irregular plural|plural/i),...IRREGULAR_EXTRA], challenge:[...POSSESSIVE_IRREGULAR_WIDE]}; }
-function bankPronouns(){ const base=repeatBank(genPronouns,5); return {easy:[...byText(base,/Replace the subject|pronoun/i),...PRONOUN_EXTRA], medium:[...byText(base,/reflexive/i),...PRONOUN_EXTRA], challenge:[...SUBJECT_PRED_EXTRA,...PRONOUN_PREDICATE_WIDE]}; }
-function bankVerbs(){ const base=repeatBank(genVerbTense,5); return {easy:[...byText(base,/PAST|FUTURE/i),...VERB_EXTRA], medium:[...byText(base,/tense|present|future|past/i),...VERB_WIDE], challenge:[...VERB_WIDE]}; }
-function bankSV(){ const base=repeatBank(genSVAgreement,5); return {easy:[...base.slice(0,35),...SV_EXTRA], medium:[...base.slice(10),...SV_WIDE], challenge:[...SV_WIDE]}; }
-function bankAdjAdv(){ const base=repeatBank(genAdjectivesAdverbs,5); return {easy:[...byText(base,/adjective|adverb/i),...ADJ_ADV_EXTRA], medium:[...byText(base,/comparative|form/i),...ADJ_ADV_WIDE], challenge:[...ADJ_ADV_WIDE]}; }
-function bankSentences(){ const base=repeatBank(genSentenceTypes,5); return {easy:[...base,...SENTENCE_EXTRA], medium:[...SENTENCE_WIDE], challenge:[...SENTENCE_WIDE]}; }
-function bankContractions(){ const base=repeatBank(genContractions,5); return {easy:[...byText(base,/Make a contraction/i),...CONTRACTION_WIDE], medium:[...byText(base,/Expand/i),...CONTRACTION_WIDE], challenge:[...CONTRACTION_WIDE]}; }
-function bankWordStructure(){ const base=repeatBank(genWordStructure,5); return {easy:[...byText(base,/Combine|compound/i),...WORD_STRUCTURE_WIDE], medium:[...byText(base,/prefix|suffix/i),...WORD_STRUCTURE_WIDE], challenge:[...WORD_STRUCTURE_WIDE]}; }
-function bankSynAnt(){ const base=repeatBank(genSynonymsAntonyms,5); return {easy:[...byText(base,/synonym/i),...SYN_ANT_WIDE], medium:[...byText(base,/antonym/i),...SYN_ANT_WIDE], challenge:[...SYN_ANT_WIDE]}; }
-function buildFromBank(bankFn, mix={easyCount:7,mediumCount:8,challengeCount:5}){ return buildElaMission({...bankFn(), ...mix}); }
-
-// Override ELA generators with balanced mission builders.
-function genNounsMission1(){ return buildFromBank(bankNouns,{easyCount:9,mediumCount:6,challengeCount:5}); }
-function genNounsMission2(){ return buildFromBank(bankNouns,{easyCount:7,mediumCount:8,challengeCount:5}); }
-function genNounsMission3(){ return buildFromBank(bankNouns,{easyCount:5,mediumCount:10,challengeCount:5}); }
-function genNounsMission4(){ return buildFromBank(bankNouns,{easyCount:6,mediumCount:9,challengeCount:5}); }
-function genNounsMission5(){ return buildFromBank(bankNouns,{easyCount:6,mediumCount:7,challengeCount:7}); }
-function genPossessiveA(){ return buildFromBank(bankPossessiveIrregular,{easyCount:10,mediumCount:5,challengeCount:5}); }
-function genPossessiveB(){ return buildFromBank(bankPossessiveIrregular,{easyCount:8,mediumCount:7,challengeCount:5}); }
-function genIrregularA(){ return buildFromBank(bankPossessiveIrregular,{easyCount:4,mediumCount:11,challengeCount:5}); }
-function genIrregularB(){ return buildFromBank(bankPossessiveIrregular,{easyCount:5,mediumCount:10,challengeCount:5}); }
-function genPossessiveIrregularReview(){ return buildFromBank(bankPossessiveIrregular,{easyCount:7,mediumCount:8,challengeCount:5}); }
-function genPronounsA(){ return buildFromBank(bankPronouns,{easyCount:10,mediumCount:5,challengeCount:5}); }
-function genPronounsB(){ return buildFromBank(bankPronouns,{easyCount:7,mediumCount:8,challengeCount:5}); }
-function genSubjectPredicateA(){ return buildFromBank(bankPronouns,{easyCount:4,mediumCount:5,challengeCount:11}); }
-function genPronounsReview(){ return buildFromBank(bankPronouns,{easyCount:7,mediumCount:6,challengeCount:7}); }
-function genVerbAction(){ return buildFromBank(bankVerbs,{easyCount:9,mediumCount:6,challengeCount:5}); }
-function genVerbPast(){ return buildFromBank(bankVerbs,{easyCount:8,mediumCount:7,challengeCount:5}); }
-function genVerbFuturePresent(){ return buildFromBank(bankVerbs,{easyCount:7,mediumCount:8,challengeCount:5}); }
-function genVerbMixed(){ return buildFromBank(bankVerbs,{easyCount:6,mediumCount:8,challengeCount:6}); }
-function genVerbReview(){ return buildFromBank(bankVerbs,{easyCount:6,mediumCount:7,challengeCount:7}); }
-function genSV1(){ return buildFromBank(bankSV,{easyCount:10,mediumCount:6,challengeCount:4}); }
-function genSV2(){ return buildFromBank(bankSV,{easyCount:8,mediumCount:8,challengeCount:4}); }
-function genSV3(){ return buildFromBank(bankSV,{easyCount:7,mediumCount:8,challengeCount:5}); }
-function genSV4(){ return buildFromBank(bankSV,{easyCount:6,mediumCount:9,challengeCount:5}); }
-function genSVReview(){ return buildFromBank(bankSV,{easyCount:6,mediumCount:8,challengeCount:6}); }
-function genAdjectivesA(){ return buildFromBank(bankAdjAdv,{easyCount:10,mediumCount:5,challengeCount:5}); }
-function genComparativesA(){ return buildFromBank(bankAdjAdv,{easyCount:5,mediumCount:10,challengeCount:5}); }
-function genAdverbsA(){ return buildFromBank(bankAdjAdv,{easyCount:8,mediumCount:7,challengeCount:5}); }
-function genAdjAdvCompare(){ return buildFromBank(bankAdjAdv,{easyCount:6,mediumCount:8,challengeCount:6}); }
-function genAdjAdvReview(){ return buildFromBank(bankAdjAdv,{easyCount:6,mediumCount:7,challengeCount:7}); }
-function genStatementsQuestions(){ return buildFromBank(bankSentences,{easyCount:10,mediumCount:6,challengeCount:4}); }
-function genExclamationsCommands(){ return buildFromBank(bankSentences,{easyCount:8,mediumCount:8,challengeCount:4}); }
-function genSentenceTypesA(){ return buildFromBank(bankSentences,{easyCount:7,mediumCount:8,challengeCount:5}); }
-function genSentenceTypesB(){ return buildFromBank(bankSentences,{easyCount:6,mediumCount:9,challengeCount:5}); }
-function genSentenceReview(){ return buildFromBank(bankSentences,{easyCount:6,mediumCount:8,challengeCount:6}); }
-function genContractionsMake(){ return buildFromBank(bankContractions,{easyCount:10,mediumCount:5,challengeCount:5}); }
-function genContractionsExpand(){ return buildFromBank(bankContractions,{easyCount:5,mediumCount:10,challengeCount:5}); }
-function genContractionsMixedA(){ return buildFromBank(bankContractions,{easyCount:7,mediumCount:8,challengeCount:5}); }
-function genContractionsMixedB(){ return buildFromBank(bankContractions,{easyCount:6,mediumCount:8,challengeCount:6}); }
-function genContractionsReview(){ return buildFromBank(bankContractions,{easyCount:6,mediumCount:7,challengeCount:7}); }
-function genCompoundWordsA(){ return buildFromBank(bankWordStructure,{easyCount:10,mediumCount:5,challengeCount:5}); }
-function genPrefixesA(){ return buildFromBank(bankWordStructure,{easyCount:5,mediumCount:10,challengeCount:5}); }
-function genSuffixesA(){ return buildFromBank(bankWordStructure,{easyCount:5,mediumCount:10,challengeCount:5}); }
-function genWordStructureMixedA(){ return buildFromBank(bankWordStructure,{easyCount:7,mediumCount:8,challengeCount:5}); }
-function genWordStructureReview(){ return buildFromBank(bankWordStructure,{easyCount:6,mediumCount:8,challengeCount:6}); }
-function genSynonymsA(){ return buildFromBank(bankSynAnt,{easyCount:10,mediumCount:5,challengeCount:5}); }
-function genAntonymsA(){ return buildFromBank(bankSynAnt,{easyCount:5,mediumCount:10,challengeCount:5}); }
-function genSynAntMixedA(){ return buildFromBank(bankSynAnt,{easyCount:7,mediumCount:8,challengeCount:5}); }
-function genSynAntMixedB(){ return buildFromBank(bankSynAnt,{easyCount:6,mediumCount:8,challengeCount:6}); }
-function genWordMeaningReview(){ return buildFromBank(bankSynAnt,{easyCount:6,mediumCount:8,challengeCount:6}); }
-function genELAReviewBalanced1(){
-  return buildElaMission({
-    easy:[...bankNouns().easy,...bankPronouns().easy,...bankVerbs().easy],
-    medium:[...bankNouns().medium,...bankPronouns().medium,...bankVerbs().medium],
-    challenge:[...bankNouns().challenge,...bankPronouns().challenge,...bankVerbs().challenge],
-    easyCount:6,mediumCount:8,challengeCount:6
-  });
-}
-function genELAReviewBalanced2(){
-  return buildElaMission({
-    easy:[...bankSentences().easy,...bankContractions().easy,...bankWordStructure().easy,...bankSynAnt().easy],
-    medium:[...bankSentences().medium,...bankContractions().medium,...bankWordStructure().medium,...bankSynAnt().medium],
-    challenge:[...bankSentences().challenge,...bankContractions().challenge,...bankWordStructure().challenge,...bankSynAnt().challenge],
-    easyCount:6,mediumCount:8,challengeCount:6
-  });
-}
 const elaGenerators=[
   null,
-  genNounsMission1,genNounsMission2,genNounsMission3,genNounsMission4,genNounsMission5,
-  genPossessiveA,genPossessiveB,genIrregularA,genIrregularB,genPossessiveIrregularReview,genPossessiveIrregularReview,
-  genPronounsA,genPronounsB,genSubjectPredicateA,genPronounsReview,
-  genVerbAction,genVerbPast,genVerbFuturePresent,genVerbMixed,genVerbReview,
-  genSV1,genSV2,genSV3,genSV4,genSVReview,
-  genAdjectivesA,genComparativesA,genAdverbsA,genAdjAdvCompare,genAdjAdvReview,
-  genStatementsQuestions,genExclamationsCommands,genSentenceTypesA,genSentenceTypesB,genSentenceReview,
-  genELAReviewBalanced1,genELAReviewBalanced1,genELAReviewBalanced1,genELAReviewBalanced1,genELAReviewBalanced1,
-  genContractionsMake,genContractionsExpand,genContractionsMixedA,genContractionsMixedB,genContractionsReview,
-  genCompoundWordsA,genPrefixesA,genSuffixesA,genWordStructureMixedA,genWordStructureReview,
-  genSynonymsA,genAntonymsA,genSynAntMixedA,genSynAntMixedB,genWordMeaningReview,
-  genELAReviewBalanced2,genELAReviewBalanced2,genELAReviewBalanced2,genELAReviewBalanced2,genELAReviewBalanced2,
+  genNouns,genNouns,genNouns,genNouns,genNouns,
+  genPossessiveIrregular,genPossessiveIrregular,genPossessiveIrregular,genPossessiveIrregular,genPossessiveIrregular,genPossessiveIrregular,
+  genPronouns,genPronouns,genPronouns,genPronouns,
+  genVerbTense,genVerbTense,genVerbTense,genVerbTense,genVerbTense,
+  genSVAgreement,genSVAgreement,genSVAgreement,genSVAgreement,genSVAgreement,
+  genAdjectivesAdverbs,genAdjectivesAdverbs,genAdjectivesAdverbs,genAdjectivesAdverbs,genAdjectivesAdverbs,
+  genSentenceTypes,genSentenceTypes,genSentenceTypes,genSentenceTypes,genSentenceTypes,
+  genELAReview1,genELAReview1,genELAReview1,genELAReview1,genELAReview1,
+  genContractions,genContractions,genContractions,genContractions,genContractions,
+  genWordStructure,genWordStructure,genWordStructure,genWordStructure,genWordStructure,
+  genSynonymsAntonyms,genSynonymsAntonyms,genSynonymsAntonyms,genSynonymsAntonyms,genSynonymsAntonyms,
+  genELAReview2,genELAReview2,genELAReview2,genELAReview2,genELAReview2,
 ];
 
 const elaMissionInfo=[
@@ -999,7 +536,7 @@ const elaMissionInfo=[
 ];
 
 // ─── Storage ───────────────────────────────────────────────────────────────
-function storageKey(subject,name){ return `missionAcademy_${subject}_${safeStudentName(name||'student')}`; }
+function storageKey(subject,name){ return `missionAcademy_${subject}_${(name||'student').replace(/[^a-z0-9]/gi,'_').toLowerCase()}`; }
 function getProgress(subject){ try{return JSON.parse(localStorage.getItem(storageKey(subject,getStudentName()))||'{}');}catch{return{};} }
 function saveProgress(subject,data){ localStorage.setItem(storageKey(subject,getStudentName()),JSON.stringify(data)); }
 // ─── Section-based locking (driven by config.js) ─────────────────────────
@@ -1044,8 +581,8 @@ function isUnlocked(n, subject) {
 }
 
 // kept for backwards compatibility — no-op since locking is config-driven
-function unlockMission(n, subject, code) { return isUnlocked(n, subject) || code === TEACHER_CODE; }
-function markComplete(n,subject,score){ const p=getProgress(subject); const first=p[`best_${n}`]==null; p[`score_${n}`]=score;p[`best_${n}`]=Math.max(score,p[`best_${n}`]||0);saveProgress(subject,p); if(first){ addXP(10); awardBadge('first_mission'); } }
+function unlockMission(n, subject, code) { return code === TEACHER_CODE; }
+function markComplete(n,subject,score){ const p=getProgress(subject);p[`score_${n}`]=score;p[`best_${n}`]=Math.max(score,p[`best_${n}`]||0);saveProgress(subject,p); }
 function getScore(n,subject){ return getProgress(subject)[`score_${n}`]??null; }
 function getBest(n,subject){ return getProgress(subject)[`best_${n}`]??null; }
 
@@ -1055,24 +592,11 @@ function getAllStudentProgress(){
     const key=localStorage.key(i);
     if(!key.startsWith('missionAcademy_')||key==='missionAcademy_studentName') continue;
     const rest=key.replace('missionAcademy_','');
-    const subjectMatch=rest.match(/^(math|ela|reading|reading_g1|reading_g2|spelling)_(.+)$/);
-    if(subjectMatch){
-      let [,subject,sName]=subjectMatch;
-      if(subject==='reading_g1'||subject==='reading_g2') subject='reading';
-      if(!students[sName]) students[sName]={math:{},ela:{},reading:{},spelling:{},profile:getProfile(sName.replace(/_/g,' '))};
-      try{students[sName][subject]={...(students[sName][subject]||{}),...JSON.parse(localStorage.getItem(key)||'{}')};}catch{}
-    }
-  }
-  // Add profile-only students, too.
-  for(let i=0;i<localStorage.length;i++){
-    const key=localStorage.key(i);
-    if(!key.startsWith('missionAcademy_profile_')) continue;
-    try{
-      const profile=JSON.parse(localStorage.getItem(key)||'{}');
-      const sName=safeStudentName(profile.name || key.replace('missionAcademy_profile_',''));
-      if(!students[sName]) students[sName]={math:{},ela:{},reading:{},spelling:{},profile};
-      else students[sName].profile={...students[sName].profile,...profile};
-    }catch{}
+    const subjectMatch=rest.match(/^(math|ela)_(.+)$/);
+    if(!subjectMatch) continue;
+    const [,subject,sName]=subjectMatch;
+    if(!students[sName]) students[sName]={math:{},ela:{}};
+    try{students[sName][subject]=JSON.parse(localStorage.getItem(key)||'{}');}catch{}
   }
   return students;
 }
@@ -1082,7 +606,7 @@ if(typeof window!=='undefined'){
     TEACHER_CODE,
     mathGenerators,mathMissionInfo,elaGenerators,elaMissionInfo,
     getProgress,saveProgress,isLocked,isUnlocked,unlockMission,markComplete,getScore,getBest,getSectionForMission,getOpenSections,
-    getAllStudentProgress,getStudentName,setStudentName,getProfile,saveProfile,setAvatar,getAvatar,getAvatarChoice,FALCON_AVATARS,getRank,addXP,awardBadge,isSoundOn,setSoundOn,toggleSound,getReadingLevel,setReadingLevelPreference,
+    getAllStudentProgress,getStudentName,setStudentName,
     AudioFX,checkAnswer,randInt,shuffle
   };
 }

@@ -36,20 +36,6 @@
   .name-btn{width:100%;background:var(--gold);color:var(--ink);border:none;border-radius:12px;padding:16px;font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:1rem;cursor:pointer;}
   .name-error{color:#ff6b6b;font-size:0.85rem;margin-top:8px;min-height:18px;}
 
-
-  .avatar-picker{margin:18px 0 20px;text-align:left;}
-  .avatar-picker-title{font-family:'Space Grotesk',sans-serif;font-weight:700;text-align:center;margin-bottom:12px;color:var(--white);}
-  .avatar-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
-  .avatar-choice{border:1.5px solid rgba(255,255,255,0.15);background:rgba(255,255,255,0.06);color:var(--white);border-radius:14px;padding:12px;cursor:pointer;text-align:center;font-family:'Space Grotesk',sans-serif;font-weight:700;transition:all .15s;}
-  .avatar-choice:hover{background:rgba(255,255,255,0.12);transform:translateY(-1px);}
-  .avatar-choice.active{background:rgba(245,166,35,0.22);border-color:var(--gold);box-shadow:0 0 0 2px rgba(245,166,35,0.12) inset;}
-  .avatar-emoji{display:block;font-size:1.7rem;margin-bottom:4px;}
-  .avatar-name{display:block;font-size:.8rem;}
-  .profile-chip{display:inline-flex;align-items:center;gap:10px;margin-top:14px;padding:10px 16px;border-radius:999px;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.12);color:var(--soft);font-family:'Space Grotesk',sans-serif;font-size:.9rem;font-weight:700;}
-  .profile-chip .avatar{font-size:1.35rem;}
-  .sound-toggle{background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.12);color:var(--soft);border-radius:999px;padding:8px 14px;font-family:'Space Grotesk',sans-serif;font-size:.8rem;font-weight:700;cursor:pointer;}
-  .sound-toggle:hover{color:var(--white);border-color:rgba(255,255,255,0.25);}
-
   /* Top links */
   .top-links{position:relative;z-index:1;display:flex;justify-content:flex-end;gap:10px;padding:12px 28px 0;}
   .top-link{padding:8px 16px;border-radius:100px;border:1px solid rgba(255,255,255,0.1);color:var(--soft);font-family:'Space Grotesk',sans-serif;font-size:0.8rem;font-weight:600;text-decoration:none;transition:all 0.2s;}
@@ -107,11 +93,7 @@
   <div class="name-box">
     <div class="name-rocket">🚀</div>
     <h2>Welcome, Explorer!</h2>
-    <p>Type your first name, then choose your Falcon.</p>
-    <div class="avatar-picker">
-      <div class="avatar-picker-title">Choose Your Falcon</div>
-      <div class="avatar-grid" id="avatarGrid"></div>
-    </div>
+    <p>Type your first name to start your missions. Your progress will be saved!</p>
     <input class="name-input" id="nameInput" type="text" placeholder="Your first name" maxlength="30" autocomplete="off">
     <button class="name-btn" onclick="submitName()">Let's Go! →</button>
     <div class="name-error" id="nameError"></div>
@@ -119,7 +101,6 @@
 </div>
 
 <div class="top-links">
-  <button class="sound-toggle" id="soundToggle" onclick="toggleSoundSetting()">🔊 Sound On</button>
   <a href="trophies.html" class="top-link">🏆 My Trophies</a>
 </div>
 
@@ -127,7 +108,6 @@
   <div class="logo-badge">🚀 Mission Academy</div>
   <h1>Welcome back,<br><span id="welcomeName">Explorer</span>!</h1>
   <p class="tagline">You've got this! Choose your mission and let's go! 🚀</p>
-  <div class="profile-chip" id="profileChip"><span class="avatar">🦅</span><span>Nest Cadet</span></div>
   <div><button class="change-name-btn" onclick="changeName()">Switch explorer</button></div>
 </header>
 
@@ -190,38 +170,11 @@
 <script src="teacher-panel.js"></script>
 <script>
 const ME=window.MissionEngine;
-let selectedAvatarId = 'rookie';
-
-function renderAvatarChoices(){
-  const grid=document.getElementById('avatarGrid');
-  if(!grid || !ME.FALCON_AVATARS) return;
-  grid.innerHTML=ME.FALCON_AVATARS.map(a=>`
-    <button type="button" class="avatar-choice ${a.id===selectedAvatarId?'active':''}" onclick="chooseAvatar('${a.id}')">
-      <span class="avatar-emoji">${a.emoji}</span>
-      <span class="avatar-name">${a.name}</span>
-    </button>`).join('');
-}
-
-function chooseAvatar(id){
-  selectedAvatarId=id;
-  renderAvatarChoices();
-}
-
-function toggleSoundSetting(){
-  ME.toggleSound();
-  updateSoundButton();
-}
-
-function updateSoundButton(){
-  const btn=document.getElementById('soundToggle');
-  if(btn) btn.textContent = ME.isSoundOn() ? '🔊 Sound On' : '🔇 Sound Off';
-}
 
 function submitName(){
   const val=document.getElementById('nameInput').value.trim();
   if(val.length<1){document.getElementById('nameError').textContent='Please type your name!';return;}
   ME.setStudentName(val);
-  ME.setAvatar(selectedAvatarId);
   document.getElementById('nameGate').classList.add('hidden');
   updatePage();
   renderLeaderboard();
@@ -244,7 +197,7 @@ function renderLeaderboard() {
       const p=d[s]||{}, t=[30,60,20,20][si];
       for(let i=1;i<=t;i++) if(p[`best_${i}`]===perfs[si]) perf++;
     });
-    const profile=d.profile||ME.getProfile(n.replace(/_/g,' ')); const av=ME.getAvatarChoice(profile.avatar); return { name: n.replace(/_/g,' '), total, perf, avatar:av.emoji, rank:ME.getRank(profile.xp||0) };
+    return { name: n.replace(/_/g,' '), total, perf };
   }).sort((a,b)=>b.total-a.total||b.perf-a.perf).slice(0,6);
 
   const medals = ['🥇','🥈','🥉'];
@@ -252,8 +205,8 @@ function renderLeaderboard() {
     <div class="lb-card rank-${i+1}">
       <div class="lb-rank">${medals[i]||`#${i+1}`}</div>
       <div class="lb-info">
-        <div class="lb-name">${s.avatar} ${s.name}</div>
-        <div class="lb-score">${s.total} missions · ${s.perf} perfect · ${s.rank}</div>
+        <div class="lb-name">${s.name}</div>
+        <div class="lb-score">${s.total} missions · ${s.perf} perfect</div>
       </div>
     </div>`).join('');
 
@@ -279,12 +232,6 @@ function updatePage(){
   const name=ME.getStudentName();
   if(!name){document.getElementById('nameGate').classList.remove('hidden');return;}
   document.getElementById('welcomeName').textContent=name;
-  const profile=ME.getProfile();
-  const avatar=ME.getAvatar();
-  selectedAvatarId=avatar.id;
-  const chip=document.getElementById('profileChip');
-  if(chip) chip.innerHTML=`<span class="avatar">${avatar.emoji}</span><span>${avatar.name} · ${ME.getRank(profile.xp||0)} · ${profile.xp||0} XP</span>`;
-  updateSoundButton();
 
   const mathDone=countDone('math',30);
   document.getElementById('mathFill').style.width=`${(mathDone/30)*100}%`;
@@ -304,7 +251,6 @@ function updatePage(){
 }
 
 // Init
-renderAvatarChoices();
 updatePage();
 renderLeaderboard();
 </script>

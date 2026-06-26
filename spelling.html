@@ -119,7 +119,7 @@
     <button class="q-close-btn" onclick="closeLockModal()">✕</button>
     <div class="lock-icon">🔒</div>
     <h2 class="lock-title">Checkpoint Mission</h2>
-    <p class="lock-desc">This mission is not open yet. Ask your teacher to open the next section from Dev Mode.</p>
+    <p class="lock-desc">Ask your teacher for the unlock code to continue!</p>
     <input class="lock-input" id="lockInput" type="password" placeholder="Enter code" maxlength="12">
     <div class="lock-error" id="lockError"></div>
     <button class="lock-submit" onclick="submitLockCode()">Unlock Mission</button>
@@ -553,7 +553,7 @@ function closeLockModal(){ document.getElementById('lockModal').classList.add('h
 function submitLockCode(){
   const code=document.getElementById('lockInput').value.trim().toUpperCase();
   if(ME.unlockMission(pendingLock,SUBJECT,code)){ closeLockModal(); buildGrid(); }
-  else document.getElementById('lockError').textContent='This section is still closed. Ask your teacher to use Dev Mode.';
+  else document.getElementById('lockError').textContent='That code is not correct. Ask your teacher!';
 }
 document.getElementById('lockInput').addEventListener('keydown',e=>{if(e.key==='Enter')submitLockCode();});
 
@@ -576,8 +576,9 @@ function showWord(){
   document.getElementById('qNumber').textContent=`Word ${wIndex+1} of ${wordList.length}`;
   document.getElementById('qProgressFill').style.width=`${(wIndex/wordList.length)*100}%`;
   document.getElementById('qFeedback').textContent=''; document.getElementById('qFeedback').className='q-feedback';
-  document.getElementById('hintBox').classList.add('hidden');
-  document.getElementById('hintBtn').disabled=false; document.getElementById('hintBtn').textContent='💡 Hint';
+  const hintBox=document.getElementById('hintBox');
+  hintBox.classList.add('hidden'); hintBox.textContent='';
+  const hintBtn=document.getElementById('hintBtn'); hintBtn.disabled=!item.hint; hintBtn.textContent='💡 Hint';
   document.getElementById('qActionArea').innerHTML='';
 
   // Show blanks

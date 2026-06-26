@@ -215,9 +215,7 @@ function renderClassOverview(){
     const mathA=avgPct(d.math||{},30,20), elaA=avgPct(d.ela||{},60,20);
     const readA=avgPct(d.reading||{},20,5), spellA=avgPct(d.spelling||{},20,10);
     const nr=needsReviewCount(d.math||{},30,20)+needsReviewCount(d.ela||{},60,20)+needsReviewCount(d.reading||{},20,5)+needsReviewCount(d.spelling||{},20,10);
-    const profile=d.profile||ME.getProfile(n.replace(/_/g,' ')); const av=ME.getAvatarChoice(profile.avatar); return `<tr>
-      <td>${av.emoji} ${av.name}</td>
-      <td>${ME.getRank(profile.xp||0)} <span style="color:var(--dim);font-size:0.75rem;">${profile.xp||0} XP</span></td>
+    return `<tr>
       <td><button class="student-tab" onclick="selectStudent('${n.replace(/'/g,"\\'")}',null);setView('student')" style="border:none;background:none;color:var(--white);font-weight:600;cursor:pointer;font-family:'Space Grotesk',sans-serif;padding:0;">${n.replace(/_/g,' ')}</button></td>
       <td>${total} <span style="color:var(--dim);font-size:0.75rem;">/ 130</span></td>
       <td>${mathD}/30 <span style="color:var(--soft);font-size:0.75rem;">(${mathA}%)</span></td>
@@ -233,7 +231,7 @@ function renderClassOverview(){
       <div style="font-family:'Space Grotesk',sans-serif;font-size:1rem;font-weight:600;color:var(--soft);margin-bottom:16px;">${names.length} student${names.length!==1?'s':''} on this device · ⚠ = below 70%</div>
       <table class="class-table">
         <thead><tr>
-          <th>Falcon</th><th>Rank</th><th>Student</th><th>Total Done</th>
+          <th>Student</th><th>Total Done</th>
           <th>➕ Math</th><th>📖 ELA</th><th>📚 Reading</th><th>🔤 Spelling</th>
           <th>Needs Review</th>
         </tr></thead>
@@ -248,8 +246,6 @@ function renderStudentDetail(rawName){
   const data=allStudents[rawName]||{};
   const mathP=data.math||{}, elaP=data.ela||{}, readP=data.reading||{}, spellP=data.spelling||{};
   const display=rawName.replace(/_/g,' ');
-  const profile=data.profile||ME.getProfile(display);
-  const av=ME.getAvatarChoice(profile.avatar);
 
   const mathDone=countDone(mathP,30), elaDone=countDone(elaP,60);
   const readDone=countDone(readP,20), spellDone=countDone(spellP,20);
@@ -280,8 +276,7 @@ function renderStudentDetail(rawName){
 
   document.getElementById('reportArea').innerHTML=`
     <div style="max-width:1200px;margin:0 auto;padding:0 28px 80px;">
-      <div style="font-family:'Space Grotesk',sans-serif;font-size:1.4rem;font-weight:700;margin-bottom:8px;">${av.emoji} ${display}</div>
-      <div style="color:var(--soft);font-family:'Space Grotesk',sans-serif;font-weight:600;margin-bottom:20px;">${av.name} · ${ME.getRank(profile.xp||0)} · ${profile.xp||0} XP</div>
+      <div style="font-family:'Space Grotesk',sans-serif;font-size:1.4rem;font-weight:700;margin-bottom:20px;">${display}</div>
 
       <div class="summary-row">
         <div class="summary-card"><div class="summary-val">${mathDone}/30</div><div class="summary-lbl">Math Done</div></div>
